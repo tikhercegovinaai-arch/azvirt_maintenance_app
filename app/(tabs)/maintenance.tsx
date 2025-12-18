@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { FlatList, Pressable, StyleSheet, View } from "react-native";
+import {
+  Alert,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  View,
+  ActivityIndicator,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
@@ -11,8 +18,10 @@ type TabType = "lubrication" | "services";
 
 export default function MaintenanceScreen() {
   const insets = useSafeAreaInsets();
-  const { appState, markLubricationComplete } = useAppData();
+  const { appState, markLubricationComplete, markAllWeeklyLubricationComplete } =
+    useAppData();
   const [activeTab, setActiveTab] = useState<TabType>("lubrication");
+  const [completing, setCompleting] = useState(false);
   const successColor = "#34C759";
   const warningColor = "#FF9500";
   const dangerColor = "#FF3B30";
@@ -41,6 +50,51 @@ export default function MaintenanceScreen() {
       default:
         return "Nepoznato";
     }
+  };
+
+  const lubricationByFrequency = {
+    daily: appState.lubricationPoints.filter((p) => p.frequency === "daily"),
+    weekly: appState.lubricationPoints.filter((p) => p.frequency === "weekly"),
+    monthly: appState.lubricationPoints.filter((p) => p.frequency === "monthly"),
+  };
+
+  const weeklyDueCount = lubricationByFrequency.weekly.filter(
+    (p) => p.status === "due" || p.status === "overdue"
+  ).length;
+
+  const handleCompleteAllWeekly = async () => {
+    Alert.alert(
+      "Potvrdi Akciju",
+      `Označiti će se ${lubricationByFrequency.weekly.length} sedmičnih točaka podmazivanja kao obavljeno. Nastaviti?`,
+      [
+        {
+          text: "Otkaži",
+          onPress: () => {},
+          style: "cancel",
+        },
+        {
+          text: "Potvrdi",
+          onPress: async () => {
+            try {
+              setCompleting(true);
+              await markAllWeeklyLubricationComplete();
+              Alert.alert(
+                "Uspjeh",
+                `${lubricationByFrequency.weekly.length} sedmičnih točaka podmazivanja označeno kao obavljeno`,
+                [{ text: "OK" }]
+              );
+            } catch (error) {
+              Alert.alert("Greška", "Greška pri označavanju točaka", [
+                { text: "OK" },
+              ]);
+            } finally {
+              setCompleting(false);
+            }
+          },
+          style: "default",
+        },
+      ]
+    );
   };
 
   const renderLubricationPoint = ({ item }: { item: LubricationPoint }) => (
@@ -106,12 +160,6 @@ export default function MaintenanceScreen() {
     );
   };
 
-  const lubricationByFrequency = {
-    daily: appState.lubricationPoints.filter((p) => p.frequency === "daily"),
-    weekly: appState.lubricationPoints.filter((p) => p.frequency === "weekly"),
-    monthly: appState.lubricationPoints.filter((p) => p.frequency === "monthly"),
-  };
-
   return (
     <ThemedView style={styles.container}>
       <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
@@ -166,13 +214,71 @@ export default function MaintenanceScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={
-            lubricationByFrequency.daily.length > 0 ? (
-              <View style={styles.frequencySection}>
-                <ThemedText type="subtitle" style={styles.frequencyTitle}>
-                  Dnevno ({lubricationByFrequency.daily.length})
-                </ThemedText>
-              </View>
-            ) : null
+            <>
+              {/* Complete All Weekly Button */}
+              {lubricationByFrequency.weekly.length > 0 && (
+                <View style={styles.bulkActionSection}>
+                  <Pressable
+                    style={[
+                      styles.completeAllButton,
+                      completing && styles.completeAllButtonDisabled,
+                    ]}
+                    onPress={handleCompleteAllWeekly}
+                    disabled={completing}
+                  >
+                    {completing ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <>
+                        <ThemedText style={styles.completeAllButtonText}>
+                          ✓ Označi sve sedmične kao obavljene
+                        </ThemedText>
+                        {weeklyDueCount > 0 && (
+                          <View style={styles.badgeCount}>
+                            <ThemedText style={styles.badgeCountText}>
+                              {weeklyDueCount}
+                            </ThemedText>
+                          </View>
+                        )}
+                      </>
+                    )}
+                  </Pressable>
+                  <ThemedText type="default" style={styles.bulkActionInfo}>
+                    Ukupno sedmičnih točaka: {lubricationByFrequency.weekly.length}
+                  </ThemedText>
+                </View>
+              )}
+
+              {/* Daily Section */}
+              {lubricationByFrequency.daily.length > 0 && (
+                <View style={styles.frequencySection}>
+                  <ThemedText type="subtitle" style={styles.frequencyTitle}>
+                    Dnevno ({lubricationByFrequency.daily.length})
+                  </ThemedText>
+                </View>
+              )}
+            </>
+          }
+          ListFooterComponent={
+            <>
+              {/* Weekly Section */}
+              {lubricationByFrequency.weekly.length > 0 && (
+                <View style={styles.frequencySection}>
+                  <ThemedText type="subtitle" style={styles.frequencyTitle}>
+                    Sedmično ({lubricationByFrequency.weekly.length})
+                  </ThemedText>
+                </View>
+              )}
+
+              {/* Monthly Section */}
+              {lubricationByFrequency.monthly.length > 0 && (
+                <View style={styles.frequencySection}>
+                  <ThemedText type="subtitle" style={styles.frequencyTitle}>
+                    Mjesečno ({lubricationByFrequency.monthly.length})
+                  </ThemedText>
+                </View>
+              )}
+            </>
           }
         />
       ) : (
@@ -229,6 +335,46 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
+  bulkActionSection: {
+    marginBottom: 20,
+    gap: 8,
+  },
+  completeAllButton: {
+    flexDirection: "row",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: "#34C759",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 48,
+    gap: 8,
+  },
+  completeAllButtonDisabled: {
+    opacity: 0.6,
+  },
+  completeAllButtonText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  badgeCount: {
+    marginLeft: "auto",
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+  },
+  badgeCountText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  bulkActionInfo: {
+    fontSize: 12,
+    opacity: 0.7,
+    paddingHorizontal: 4,
+  },
   frequencySection: {
     marginBottom: 12,
   },
@@ -250,20 +396,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   lubricationSubtitle: {
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: 13,
+    marginTop: 2,
     opacity: 0.7,
   },
   lubricationDate: {
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 4,
     opacity: 0.6,
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     borderRadius: 6,
-    marginLeft: 8,
+    marginLeft: 12,
   },
   statusText: {
     color: "#fff",
@@ -273,7 +419,6 @@ const styles = StyleSheet.create({
   serviceItem: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
     paddingVertical: 12,
     paddingHorizontal: 12,
     marginBottom: 8,
@@ -284,27 +429,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   serviceSubtitle: {
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: 13,
+    marginTop: 2,
     opacity: 0.7,
   },
   serviceDate: {
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 4,
     opacity: 0.6,
   },
   serviceNotes: {
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 4,
+    opacity: 0.6,
     fontStyle: "italic",
-    opacity: 0.7,
   },
   serviceCost: {
     alignItems: "flex-end",
     marginLeft: 12,
   },
   technician: {
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 4,
     opacity: 0.7,
   },
@@ -312,6 +457,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 32,
+    paddingVertical: 40,
   },
 });

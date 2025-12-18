@@ -206,6 +206,30 @@ export function useAppData() {
     [appState.lubricationPoints],
   );
 
+  const markAllWeeklyLubricationComplete = useCallback(
+    async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const nextDueDate = new Date();
+      nextDueDate.setDate(nextDueDate.getDate() + 7);
+      const nextDueDateStr = nextDueDate.toISOString().split("T")[0];
+
+      const updatedPoints = appState.lubricationPoints.map((p) =>
+        p.frequency === "weekly"
+          ? {
+              ...p,
+              lastCompleted: today,
+              nextDue: nextDueDateStr,
+              status: "good" as const,
+            }
+          : p,
+      );
+
+      setAppState((prev) => ({ ...prev, lubricationPoints: updatedPoints }));
+      await saveLubricationPoints(updatedPoints);
+    },
+    [appState.lubricationPoints],
+  );
+
   // Spare parts operations
   const updatePartStock = useCallback(
     async (partId: string, newStock: number) => {
@@ -269,6 +293,7 @@ export function useAppData() {
     addServiceRecord,
     addFuelLog,
     markLubricationComplete,
+    markAllWeeklyLubricationComplete,
     updatePartStock,
     addSparePart,
     deleteSparePart,
