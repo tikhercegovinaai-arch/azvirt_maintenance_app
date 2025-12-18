@@ -153,3 +153,41 @@
 - [x] Handle file permissions for document export
 - [x] Implement file naming with timestamps
 - [x] Add success/error notifications for exports
+
+
+## Quick Data Entry Modals
+
+### Log Hours Modal
+- [x] Create modal component for logging equipment hours
+- [x] Implement equipment selector dropdown
+- [x] Add hours input field with validation
+- [x] Add optional notes field
+- [x] Implement save functionality
+- [x] Add modal to Dashboard screen
+
+### Record Service Modal
+- [x] Create modal component for recording service
+- [x] Implement equipment selector
+- [x] Add service type dropdown
+- [x] Add parts used multi-select
+- [x] Add cost input field
+- [x] Add technician name field
+- [x] Add notes field
+- [x] Implement save functionality
+- [x] Add modal to Dashboard and Equipment screens
+
+### Add Fuel Modal
+- [x] Create modal component for adding fuel
+- [x] Implement equipment selector
+- [x] Add liters input field
+- [x] Add cost per liter field
+- [x] Add optional notes field
+- [x] Implement save functionality
+- [x] Add modal to Dashboard and Equipment screens
+
+### Modal Integration
+- [x] Create modal state management hook
+- [x] Add modal overlay/backdrop
+- [x] Implement form validation
+- [x] Add success notifications
+- [x] Add error handling

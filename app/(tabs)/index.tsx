@@ -1,78 +1,70 @@
-import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, View } from "react-native";
+import { useCallback, useState } from "react";
+import {
+  FlatList,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useAppData } from "@/hooks/use-app-data";
-import { useThemeColor } from "@/hooks/use-theme-color";
-import { Equipment, Alert } from "@/types";
+import { LogHoursModal } from "@/components/modals/log-hours-modal";
+import { RecordServiceModal } from "@/components/modals/record-service-modal";
+import { AddFuelModal } from "@/components/modals/add-fuel-modal";
 
-export default function HomeScreen() {
+export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
-  const { appState, loading, alerts, getEquipmentStatus } = useAppData();
+  const { appState, alerts, loading } = useAppData();
   const [refreshing, setRefreshing] = useState(false);
-  const backgroundColor = useThemeColor({}, "background");
-  const cardColor = useThemeColor({}, "background");
-  const textColor = useThemeColor({}, "text");
-  const successColor = "#34C759";
-  const warningColor = "#FF9500";
-  const dangerColor = "#FF3B30";
+  const [logHoursOpen, setLogHoursOpen] = useState(false);
+  const [recordServiceOpen, setRecordServiceOpen] = useState(false);
+  const [addFuelOpen, setAddFuelOpen] = useState(false);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 1000);
   }, []);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "good":
-        return successColor;
-      case "warning":
-        return warningColor;
-      case "overdue":
-        return dangerColor;
-      default:
-        return "#8E8E93";
+  const getEquipmentStatus = (equipment: any) => {
+    const hoursSinceLastService = equipment.currentHours - equipment.lastServiceHours;
+    const hoursUntilService = equipment.serviceIntervalHours - hoursSinceLastService;
+
+    if (hoursUntilService <= 0) {
+      return { status: "overdue", color: "#FF3B30", label: "Zakašnjelo" };
+    } else if (hoursUntilService <= 50) {
+      return { status: "warning", color: "#FF9500", label: "Uskoro" };
     }
+    return { status: "good", color: "#34C759", label: "Dobro" };
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "good":
-        return "Dobro";
-      case "warning":
-        return "Upozorenje";
-      case "overdue":
-        return "Zakašnjelo";
-      default:
-        return "Nepoznato";
-    }
-  };
-
-  const renderEquipmentCard = ({ item }: { item: Equipment }) => {
-    const status = getEquipmentStatus(item);
+  const renderEquipmentCard = ({ item }: any) => {
+    const statusInfo = getEquipmentStatus(item);
     const hoursSinceLastService = item.currentHours - item.lastServiceHours;
     const hoursUntilService = item.serviceIntervalHours - hoursSinceLastService;
 
     return (
-      <Pressable style={[styles.equipmentCard, { backgroundColor: cardColor }]}>
+      <View style={styles.equipmentCard}>
         <View style={styles.cardHeader}>
-          <ThemedText type="defaultSemiBold" style={styles.equipmentName}>
-            {item.displayName}
-          </ThemedText>
-          <View
-            style={[
-              styles.statusBadge,
-              { backgroundColor: getStatusColor(status) },
-            ]}
-          >
-            <ThemedText style={styles.statusText}>{getStatusLabel(status)}</ThemedText>
+          <View style={styles.cardTitleSection}>
+            <ThemedText type="defaultSemiBold" style={styles.equipmentName}>
+              {item.displayName}
+            </ThemedText>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: statusInfo.color },
+              ]}
+            >
+              <ThemedText style={styles.statusText}>{statusInfo.label}</ThemedText>
+            </View>
           </View>
         </View>
 
-        <View style={styles.cardContent}>
-          <View style={styles.statRow}>
+        <View style={styles.cardStats}>
+          <View style={styles.stat}>
             <ThemedText type="default" style={styles.statLabel}>
               Trenutni Sati:
             </ThemedText>
@@ -81,7 +73,7 @@ export default function HomeScreen() {
             </ThemedText>
           </View>
 
-          <View style={styles.statRow}>
+          <View style={styles.stat}>
             <ThemedText type="default" style={styles.statLabel}>
               Sati do Servisa:
             </ThemedText>
@@ -89,87 +81,138 @@ export default function HomeScreen() {
               type="defaultSemiBold"
               style={[
                 styles.statValue,
-                { color: hoursUntilService <= 0 ? dangerColor : warningColor },
+                hoursUntilService <= 0 && styles.statValueError,
               ]}
             >
               {Math.max(0, hoursUntilService)}h
             </ThemedText>
           </View>
 
-          <View style={styles.statRow}>
+          <View style={styles.stat}>
             <ThemedText type="default" style={styles.statLabel}>
               Zadnji Servis:
             </ThemedText>
-            <ThemedText type="default" style={styles.statValue}>
+            <ThemedText type="defaultSemiBold" style={styles.statValue}>
               {item.lastServiceDate}
             </ThemedText>
           </View>
         </View>
-      </Pressable>
+      </View>
     );
   };
 
-  const renderAlertCard = ({ item }: { item: Alert }) => {
-    const alertBgColor = item.type === "overdue" ? dangerColor : warningColor;
+  const renderAlert = ({ item }: any) => {
+    const alertColor =
+      item.type === "overdue"
+        ? "#FF3B30"
+        : item.type === "warning"
+          ? "#FF9500"
+          : "#007AFF";
 
     return (
-      <Pressable style={[styles.alertCard, { backgroundColor: alertBgColor }]}>
+      <View style={[styles.alertBox, { borderLeftColor: alertColor }]}>
         <View style={styles.alertContent}>
           <ThemedText type="defaultSemiBold" style={styles.alertTitle}>
             {item.title}
           </ThemedText>
-          <ThemedText style={styles.alertMessage}>{item.message}</ThemedText>
+          <ThemedText type="default" style={styles.alertMessage}>
+            {item.message}
+          </ThemedText>
         </View>
         {item.actionLabel && (
-          <ThemedText type="link" style={styles.alertAction}>
-            {item.actionLabel}
-          </ThemedText>
+          <Pressable style={styles.alertAction}>
+            <ThemedText style={[styles.alertActionText, { color: alertColor }]}>
+              {item.actionLabel}
+            </ThemedText>
+          </Pressable>
         )}
-      </Pressable>
+      </View>
     );
   };
 
-  if (loading) {
-    return (
-      <ThemedView style={styles.container}>
-        <ActivityIndicator size="large" />
-      </ThemedView>
-    );
-  }
-
   return (
     <ThemedView style={styles.container}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
+        <ThemedText type="title">Kontrolna Tabla</ThemedText>
+      </View>
+
       <FlatList
         data={appState.equipment}
         renderItem={renderEquipmentCard}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={
-          <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
-            <ThemedText type="title">Kontrolna Tabla</ThemedText>
+          <>
+            {/* Quick Action Buttons */}
+            <View style={styles.quickActionsSection}>
+              <ThemedText type="subtitle" style={styles.sectionTitle}>
+                Brze Akcije
+              </ThemedText>
+              <View style={styles.quickActionsGrid}>
+                <Pressable
+                  style={styles.quickActionButton}
+                  onPress={() => setLogHoursOpen(true)}
+                >
+                  <ThemedText style={styles.quickActionIcon}>⏱️</ThemedText>
+                  <ThemedText style={styles.quickActionLabel}>Unesi Sate</ThemedText>
+                </Pressable>
+                <Pressable
+                  style={styles.quickActionButton}
+                  onPress={() => setRecordServiceOpen(true)}
+                >
+                  <ThemedText style={styles.quickActionIcon}>🔧</ThemedText>
+                  <ThemedText style={styles.quickActionLabel}>Servis</ThemedText>
+                </Pressable>
+                <Pressable
+                  style={styles.quickActionButton}
+                  onPress={() => setAddFuelOpen(true)}
+                >
+                  <ThemedText style={styles.quickActionIcon}>⛽</ThemedText>
+                  <ThemedText style={styles.quickActionLabel}>Gorivo</ThemedText>
+                </Pressable>
+              </View>
+            </View>
+
+            {/* Active Alerts */}
             {alerts.length > 0 && (
               <View style={styles.alertsSection}>
-                <ThemedText type="subtitle" style={styles.alertsTitle}>
+                <ThemedText type="subtitle" style={styles.sectionTitle}>
                   Aktivna Upozorenja ({alerts.length})
                 </ThemedText>
                 <FlatList
-                  data={alerts.slice(0, 3)}
-                  renderItem={renderAlertCard}
+                  data={alerts}
+                  renderItem={renderAlert}
                   keyExtractor={(item) => item.id}
                   scrollEnabled={false}
                 />
               </View>
             )}
-          </View>
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <ThemedText type="default">Nema opreme za prikaz</ThemedText>
-          </View>
+
+            {/* Equipment Section */}
+            <View style={styles.equipmentSection}>
+              <ThemedText type="subtitle" style={styles.sectionTitle}>
+                Status Opreme
+              </ThemedText>
+            </View>
+          </>
         }
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+      />
+
+      {/* Modals */}
+      <LogHoursModal
+        isOpen={logHoursOpen}
+        onClose={() => setLogHoursOpen(false)}
+      />
+      <RecordServiceModal
+        isOpen={recordServiceOpen}
+        onClose={() => setRecordServiceOpen(false)}
+      />
+      <AddFuelModal
+        isOpen={addFuelOpen}
+        onClose={() => setAddFuelOpen(false)}
       />
     </ThemedView>
   );
@@ -183,96 +226,121 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 16,
   },
-  alertsSection: {
-    marginTop: 24,
+  listContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
   },
-  alertsTitle: {
+  quickActionsSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
     marginBottom: 12,
     fontSize: 18,
   },
-  equipmentCard: {
-    marginHorizontal: 16,
-    marginBottom: 12,
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  cardHeader: {
+  quickActionsGrid: {
     flexDirection: "row",
+    gap: 12,
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
   },
-  equipmentName: {
-    fontSize: 16,
+  quickActionButton: {
     flex: 1,
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginLeft: 8,
-  },
-  statusText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  cardContent: {
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 122, 255, 0.1)",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
   },
-  statRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  quickActionIcon: {
+    fontSize: 24,
   },
-  statLabel: {
-    fontSize: 14,
-    flex: 1,
+  quickActionLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#007AFF",
   },
-  statValue: {
-    fontSize: 14,
-    minWidth: 80,
-    textAlign: "right",
+  alertsSection: {
+    marginBottom: 24,
   },
-  alertCard: {
-    marginBottom: 8,
+  alertBox: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     borderRadius: 8,
-    padding: 12,
+    borderLeftWidth: 4,
+    marginBottom: 8,
+    backgroundColor: "rgba(0, 0, 0, 0.02)",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
   alertContent: {
     flex: 1,
+    gap: 4,
   },
   alertTitle: {
-    color: "#fff",
     fontSize: 14,
-    marginBottom: 4,
   },
   alertMessage: {
-    color: "#fff",
     fontSize: 12,
-    opacity: 0.9,
+    opacity: 0.7,
   },
   alertAction: {
-    color: "#fff",
+    marginLeft: 12,
+  },
+  alertActionText: {
     fontSize: 12,
-    marginLeft: 8,
-    textDecorationLine: "underline",
+    fontWeight: "600",
   },
-  listContent: {
-    paddingBottom: 16,
+  equipmentSection: {
+    marginBottom: 12,
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
+  equipmentCard: {
+    marginBottom: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 0, 0, 0.02)",
+  },
+  cardHeader: {
+    marginBottom: 12,
+  },
+  cardTitleSection: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    padding: 32,
+  },
+  equipmentName: {
+    fontSize: 16,
+    flex: 1,
+  },
+  statusBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+  },
+  statusText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  cardStats: {
+    gap: 8,
+  },
+  stat: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  statLabel: {
+    fontSize: 13,
+    opacity: 0.7,
+  },
+  statValue: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  statValueError: {
+    color: "#FF3B30",
   },
 });
