@@ -131,3 +131,25 @@
 - [ ] Verify all features working end-to-end
 - [ ] Test on actual device/simulator
 - [ ] Prepare for publishing
+
+
+## Export Functionality
+
+### CSV Export
+- [x] Create CSV export utility for service records
+- [x] Create CSV export utility for monthly reports
+- [x] Create CSV export utility for inventory
+- [x] Implement file sharing/download mechanism
+- [x] Add export button to Reports screen
+
+### PDF Export
+- [x] Create PDF export utility for monthly reports
+- [x] Create PDF export utility for service history
+- [x] Format PDF with headers, tables, and summaries
+- [x] Implement file sharing/download mechanism
+- [x] Add export button to Reports screen
+
+### File Management
+- [x] Handle file permissions for document export
+- [x] Implement file naming with timestamps
+- [x] Add success/error notifications for exports

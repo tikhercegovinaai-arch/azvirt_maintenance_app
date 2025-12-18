@@ -1,16 +1,31 @@
 import { useState } from "react";
-import { FlatList, Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useAppData } from "@/hooks/use-app-data";
+import { useFileExport } from "@/hooks/use-file-export";
+import {
+  exportMonthlyReportCSV,
+  exportServiceHistoryCSV,
+  exportInventoryCSV,
+  exportFuelLogsCSV,
+  generateFilename,
+} from "@/lib/export-csv";
+import {
+  generateMonthlyReportPDF,
+  generateServiceHistoryPDF,
+  generateInventoryPDF,
+  generatePDFFilename,
+} from "@/lib/export-pdf";
 
-type TabType = "daily" | "monthly";
+type TabType = "monthly" | "daily";
 
 export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
   const { appState } = useAppData();
+  const { exporting, exportCSV, exportText, showExportResult } = useFileExport();
   const [activeTab, setActiveTab] = useState<TabType>("monthly");
 
   // Calculate monthly summary
@@ -65,6 +80,55 @@ export default function ReportsScreen() {
 
   const monthlySummary = calculateMonthlySummary();
 
+  const handleExportMonthlyCSV = async () => {
+    const csvContent = exportMonthlyReportCSV(appState, monthlySummary.month);
+    const filename = generateFilename("Mjesecni_Izvjestaj", "csv");
+    const result = await exportCSV(csvContent, filename);
+    showExportResult(result);
+  };
+
+  const handleExportMonthlyPDF = async () => {
+    const pdfContent = generateMonthlyReportPDF(appState, monthlySummary.month);
+    const filename = generatePDFFilename("Mjesecni_Izvjestaj");
+    const result = await exportText(pdfContent, filename);
+    showExportResult(result);
+  };
+
+  const handleExportServiceHistoryCSV = async () => {
+    const csvContent = exportServiceHistoryCSV(appState);
+    const filename = generateFilename("Istorija_Servisa", "csv");
+    const result = await exportCSV(csvContent, filename);
+    showExportResult(result);
+  };
+
+  const handleExportServiceHistoryPDF = async () => {
+    const pdfContent = generateServiceHistoryPDF(appState);
+    const filename = generatePDFFilename("Istorija_Servisa");
+    const result = await exportText(pdfContent, filename);
+    showExportResult(result);
+  };
+
+  const handleExportInventoryCSV = async () => {
+    const csvContent = exportInventoryCSV(appState);
+    const filename = generateFilename("Inventar", "csv");
+    const result = await exportCSV(csvContent, filename);
+    showExportResult(result);
+  };
+
+  const handleExportInventoryPDF = async () => {
+    const pdfContent = generateInventoryPDF(appState);
+    const filename = generatePDFFilename("Inventar");
+    const result = await exportText(pdfContent, filename);
+    showExportResult(result);
+  };
+
+  const handleExportFuelLogsCSV = async () => {
+    const csvContent = exportFuelLogsCSV(appState);
+    const filename = generateFilename("Istorija_Goriva", "csv");
+    const result = await exportCSV(csvContent, filename);
+    showExportResult(result);
+  };
+
   const renderEquipmentBreakdown = ({ item }: any) => (
     <View style={styles.breakdownItem}>
       <View style={styles.breakdownInfo}>
@@ -94,6 +158,100 @@ export default function ReportsScreen() {
           Servis: €{item.serviceCost.toFixed(2)}
         </ThemedText>
       </View>
+    </View>
+  );
+
+  const renderExportButtons = () => (
+    <View style={styles.exportSection}>
+      <ThemedText type="subtitle" style={styles.exportTitle}>
+        Izvezi Podatke
+      </ThemedText>
+      <View style={styles.buttonGrid}>
+        <Pressable
+          style={[styles.exportButton, exporting && styles.exportButtonDisabled]}
+          onPress={handleExportMonthlyCSV}
+          disabled={exporting}
+        >
+          {exporting ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <ThemedText style={styles.exportButtonText}>CSV Mjesečno</ThemedText>
+          )}
+        </Pressable>
+        <Pressable
+          style={[styles.exportButton, exporting && styles.exportButtonDisabled]}
+          onPress={handleExportMonthlyPDF}
+          disabled={exporting}
+        >
+          {exporting ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <ThemedText style={styles.exportButtonText}>TXT Mjesečno</ThemedText>
+          )}
+        </Pressable>
+      </View>
+
+      <View style={styles.buttonGrid}>
+        <Pressable
+          style={[styles.exportButton, exporting && styles.exportButtonDisabled]}
+          onPress={handleExportServiceHistoryCSV}
+          disabled={exporting}
+        >
+          {exporting ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <ThemedText style={styles.exportButtonText}>CSV Servisi</ThemedText>
+          )}
+        </Pressable>
+        <Pressable
+          style={[styles.exportButton, exporting && styles.exportButtonDisabled]}
+          onPress={handleExportServiceHistoryPDF}
+          disabled={exporting}
+        >
+          {exporting ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <ThemedText style={styles.exportButtonText}>TXT Servisi</ThemedText>
+          )}
+        </Pressable>
+      </View>
+
+      <View style={styles.buttonGrid}>
+        <Pressable
+          style={[styles.exportButton, exporting && styles.exportButtonDisabled]}
+          onPress={handleExportInventoryCSV}
+          disabled={exporting}
+        >
+          {exporting ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <ThemedText style={styles.exportButtonText}>CSV Inventar</ThemedText>
+          )}
+        </Pressable>
+        <Pressable
+          style={[styles.exportButton, exporting && styles.exportButtonDisabled]}
+          onPress={handleExportInventoryPDF}
+          disabled={exporting}
+        >
+          {exporting ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <ThemedText style={styles.exportButtonText}>TXT Inventar</ThemedText>
+          )}
+        </Pressable>
+      </View>
+
+      <Pressable
+        style={[styles.exportButtonFull, exporting && styles.exportButtonDisabled]}
+        onPress={handleExportFuelLogsCSV}
+        disabled={exporting}
+      >
+        {exporting ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <ThemedText style={styles.exportButtonText}>CSV Istorija Goriva</ThemedText>
+        )}
+      </Pressable>
     </View>
   );
 
@@ -145,6 +303,8 @@ export default function ReportsScreen() {
           data={[monthlySummary]}
           renderItem={({ item }) => (
             <View style={styles.reportContainer}>
+              {renderExportButtons()}
+
               <View style={styles.reportHeader}>
                 <ThemedText type="subtitle">Mjesečni Pregled</ThemedText>
                 <ThemedText type="default" style={styles.reportMonth}>
@@ -283,6 +443,48 @@ const styles = StyleSheet.create({
   },
   reportContainer: {
     gap: 16,
+  },
+  exportSection: {
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0, 0, 0, 0.1)",
+  },
+  exportTitle: {
+    marginBottom: 12,
+    fontSize: 16,
+  },
+  buttonGrid: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 8,
+  },
+  exportButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: "#007AFF",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+  },
+  exportButtonFull: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: "#007AFF",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+  },
+  exportButtonDisabled: {
+    opacity: 0.6,
+  },
+  exportButtonText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "600",
   },
   reportHeader: {
     marginBottom: 8,
