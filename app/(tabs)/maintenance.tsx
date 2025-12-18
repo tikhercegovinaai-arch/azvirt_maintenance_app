@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Alert,
   FlatList,
@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
+import { SearchBar } from "@/components/search-bar";
 import { useAppData } from "@/hooks/use-app-data";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { LubricationPoint, ServiceRecord } from "@/types";
@@ -24,6 +25,7 @@ export default function MaintenanceScreen() {
     useAppData();
   const [activeTab, setActiveTab] = useState<TabType>("lubrication");
   const [completing, setCompleting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const isDark = colorScheme === "dark";
   const successColor = "#34C759";
   const warningColor = "#FF9500";
@@ -64,6 +66,20 @@ export default function MaintenanceScreen() {
   const weeklyDueCount = lubricationByFrequency.weekly.filter(
     (p) => p.status === "due" || p.status === "overdue"
   ).length;
+
+  // Filter service records based on search query
+  const filteredServices = useMemo(() => {
+    if (!searchQuery.trim()) return appState.serviceRecords;
+
+    const query = searchQuery.toLowerCase();
+    return appState.serviceRecords.filter((record) => {
+      const equipment = appState.equipment.find((e) => e.id === record.equipmentId);
+      return (
+        record.serviceType.toLowerCase().includes(query) ||
+        equipment?.displayName.toLowerCase().includes(query)
+      );
+    });
+  }, [appState.serviceRecords, appState.equipment, searchQuery]);
 
   const handleCompleteAllWeekly = async () => {
     Alert.alert(
@@ -226,6 +242,15 @@ export default function MaintenanceScreen() {
           </Pressable>
         </View>
 
+        {activeTab === "services" && (
+          <SearchBar
+            placeholder="Pretraži servise..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onClear={() => setSearchQuery("")}
+          />
+        )}
+
         {activeTab === "lubrication" ? (
           <FlatList
             data={[
@@ -306,13 +331,13 @@ export default function MaintenanceScreen() {
           />
         ) : (
           <FlatList
-            data={appState.serviceRecords}
+            data={filteredServices}
             renderItem={renderServiceRecord}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <ThemedText type="default">Nema servisa</ThemedText>
+                <ThemedText type="default">Nema pronađenih servisa</ThemedText>
               </View>
             }
           />
@@ -339,7 +364,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 12,
   },
   headerTitle: {
     fontSize: 32,

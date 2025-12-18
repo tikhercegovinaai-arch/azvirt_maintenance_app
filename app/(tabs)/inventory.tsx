@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { FlatList, ImageBackground, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { SearchBar } from "@/components/search-bar";
 import { useAppData } from "@/hooks/use-app-data";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { SparePart } from "@/types";
@@ -13,6 +14,7 @@ export default function InventoryScreen() {
   const colorScheme = useColorScheme();
   const { appState, getTotalInventoryValue } = useAppData();
   const [selectedPart, setSelectedPart] = useState<SparePart | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const isDark = colorScheme === "dark";
   const successColor = "#34C759";
   const warningColor = "#FF9500";
@@ -49,6 +51,18 @@ export default function InventoryScreen() {
         return "Nepoznato";
     }
   };
+
+  // Filter parts based on search query
+  const filteredParts = useMemo(() => {
+    if (!searchQuery.trim()) return appState.spareParts;
+
+    const query = searchQuery.toLowerCase();
+    return appState.spareParts.filter(
+      (part) =>
+        part.name.toLowerCase().includes(query) ||
+        part.partNumber.toLowerCase().includes(query)
+    );
+  }, [appState.spareParts, searchQuery]);
 
   const renderPartItem = ({ item }: { item: SparePart }) => {
     const status = getStockStatus(item);
@@ -261,8 +275,15 @@ export default function InventoryScreen() {
           </ThemedText>
         </View>
 
+        <SearchBar
+          placeholder="Pretraži dijelove..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onClear={() => setSearchQuery("")}
+        />
+
         <FlatList
-          data={appState.spareParts}
+          data={filteredParts}
           renderItem={renderPartItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
@@ -285,7 +306,7 @@ export default function InventoryScreen() {
                     Dijelovi
                   </ThemedText>
                   <ThemedText type="title" style={styles.summaryValue}>
-                    {appState.spareParts.length}
+                    {filteredParts.length}
                   </ThemedText>
                 </View>
 
@@ -324,6 +345,11 @@ export default function InventoryScreen() {
               )}
             </>
           }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <ThemedText type="default">Nema pronađenih dijelova</ThemedText>
+            </View>
+          }
         />
       </View>
     </ImageBackground>
@@ -347,7 +373,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 12,
   },
   headerTitle: {
     fontSize: 32,
@@ -481,5 +507,11 @@ const styles = StyleSheet.create({
   },
   valueText: {
     color: "#34C759",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
   },
 });

@@ -226,3 +226,37 @@
 - [ ] Add safety/industrial icons
 - [x] Improve typography hierarchy
 - [x] Add visual depth with shadows and borders
+
+
+## Search & Filtering
+
+### Inventory Search
+- [x] Add search bar component to Inventory screen
+- [x] Implement search by part name and SKU
+- [x] Add real-time filtering as user types
+- [x] Display search results count
+- [x] Add clear search button
+
+### Service Records Search
+- [x] Add search bar component to Service Records tab
+- [x] Implement search by service type and equipment
+- [ ] Add date range filtering
+- [x] Display search results count
+- [x] Add clear search button
+
+## Local Notifications
+
+### Notification Setup
+- [x] Configure expo-notifications package
+- [x] Request notification permissions
+- [x] Create notification handler functions
+
+### Maintenance Alerts
+- [x] Schedule notifications for overdue maintenance
+- [x] Notify when equipment hours approach service interval
+- [x] Notify when lubrication points are overdue
+
+### Inventory Alerts
+- [x] Schedule notifications when spare parts reach critical stock level
+- [x] Schedule notifications when spare parts reach low stock level
+- [ ] Allow users to dismiss or snooze notifications
