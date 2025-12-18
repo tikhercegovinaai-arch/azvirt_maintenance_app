@@ -1,18 +1,19 @@
 import { useState } from "react";
-import { FlatList, Pressable, StyleSheet, View } from "react-native";
+import { FlatList, ImageBackground, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useAppData } from "@/hooks/use-app-data";
-import { useThemeColor } from "@/hooks/use-theme-color";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Equipment } from "@/types";
 
 export default function EquipmentScreen() {
   const insets = useSafeAreaInsets();
+  const colorScheme = useColorScheme();
   const { appState, getEquipmentStatus } = useAppData();
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
-  const backgroundColor = useThemeColor({}, "background");
+  const isDark = colorScheme === "dark";
   const successColor = "#34C759";
   const warningColor = "#FF9500";
   const dangerColor = "#FF3B30";
@@ -50,7 +51,7 @@ export default function EquipmentScreen() {
 
     return (
       <Pressable
-        style={[styles.equipmentItem, { backgroundColor }]}
+        style={styles.equipmentItem}
         onPress={() => setSelectedEquipment(item)}
       >
         <View style={styles.itemHeader}>
@@ -75,7 +76,9 @@ export default function EquipmentScreen() {
             <ThemedText type="default" style={styles.statLabel}>
               Sati
             </ThemedText>
-            <ThemedText type="defaultSemiBold">{item.currentHours}h</ThemedText>
+            <ThemedText type="defaultSemiBold" style={styles.statValue}>
+              {item.currentHours}h
+            </ThemedText>
           </View>
           <View style={styles.statItem}>
             <ThemedText type="default" style={styles.statLabel}>
@@ -83,7 +86,10 @@ export default function EquipmentScreen() {
             </ThemedText>
             <ThemedText
               type="defaultSemiBold"
-              style={{ color: hoursUntilService <= 0 ? dangerColor : "#007AFF" }}
+              style={[
+                styles.statValue,
+                hoursUntilService <= 0 && styles.statValueError,
+              ]}
             >
               {Math.max(0, hoursUntilService)}h
             </ThemedText>
@@ -92,7 +98,7 @@ export default function EquipmentScreen() {
             <ThemedText type="default" style={styles.statLabel}>
               Interval
             </ThemedText>
-            <ThemedText type="defaultSemiBold">
+            <ThemedText type="defaultSemiBold" style={styles.statValue}>
               {item.serviceIntervalHours}h
             </ThemedText>
           </View>
@@ -119,121 +125,136 @@ export default function EquipmentScreen() {
     );
 
     return (
-      <ThemedView style={[styles.detailContainer, { paddingTop: insets.top }]}>
-        <Pressable
-          style={styles.closeButton}
-          onPress={() => setSelectedEquipment(null)}
-        >
-          <ThemedText style={styles.closeButtonText}>✕</ThemedText>
-        </Pressable>
+      <ImageBackground
+        source={require("@/assets/images/background.jpg")}
+        style={styles.detailContainer}
+        imageStyle={styles.backgroundImage}
+      >
+        <View
+          style={[
+            styles.overlay,
+            {
+              backgroundColor: isDark
+                ? "rgba(0, 0, 0, 0.6)"
+                : "rgba(255, 255, 255, 0.85)",
+            },
+          ]}
+        />
 
-        <View style={styles.detailHeader}>
-          <ThemedText type="title">{selectedEquipment.displayName}</ThemedText>
-          <View
-            style={[
-              styles.statusBadge,
-              { backgroundColor: getStatusColor(status) },
-            ]}
+        <View style={[styles.detailContent, { paddingTop: insets.top }]}>
+          <Pressable
+            style={styles.closeButton}
+            onPress={() => setSelectedEquipment(null)}
           >
-            <ThemedText style={styles.statusText}>
-              {status === "good"
-                ? "Dobro"
-                : status === "warning"
-                  ? "Upozorenje"
-                  : "Zakašnjelo"}
-            </ThemedText>
-          </View>
-        </View>
+            <ThemedText style={styles.closeButtonText}>✕</ThemedText>
+          </Pressable>
 
-        <View style={styles.detailStats}>
-          <View style={styles.detailStatItem}>
-            <ThemedText type="default" style={styles.detailStatLabel}>
-              Trenutni Sati
-            </ThemedText>
-            <ThemedText type="title" style={styles.detailStatValue}>
-              {selectedEquipment.currentHours}h
-            </ThemedText>
-          </View>
-
-          <View style={styles.detailStatItem}>
-            <ThemedText type="default" style={styles.detailStatLabel}>
-              Sati do Servisa
-            </ThemedText>
-            <ThemedText
-              type="title"
+          <View style={styles.detailHeader}>
+            <ThemedText type="title">{selectedEquipment.displayName}</ThemedText>
+            <View
               style={[
-                styles.detailStatValue,
-                { color: hoursUntilService <= 0 ? dangerColor : "#007AFF" },
+                styles.statusBadge,
+                { backgroundColor: getStatusColor(status) },
               ]}
             >
-              {Math.max(0, hoursUntilService)}h
-            </ThemedText>
+              <ThemedText style={styles.statusText}>
+                {getStatusLabel(status)}
+              </ThemedText>
+            </View>
           </View>
 
-          <View style={styles.detailStatItem}>
-            <ThemedText type="default" style={styles.detailStatLabel}>
-              Zadnji Servis
-            </ThemedText>
-            <ThemedText type="default" style={styles.detailStatValue}>
-              {selectedEquipment.lastServiceDate}
-            </ThemedText>
-          </View>
-        </View>
+          <View style={styles.detailStats}>
+            <View style={styles.detailStatItem}>
+              <ThemedText type="default" style={styles.detailStatLabel}>
+                Trenutni Sati
+              </ThemedText>
+              <ThemedText type="title" style={styles.detailStatValue}>
+                {selectedEquipment.currentHours}h
+              </ThemedText>
+            </View>
 
-        <View style={styles.detailSection}>
-          <ThemedText type="subtitle">Istorija Servisa</ThemedText>
-          {serviceHistory.length > 0 ? (
-            <FlatList
-              data={serviceHistory}
-              renderItem={({ item }) => (
-                <View style={styles.historyItem}>
-                  <View>
-                    <ThemedText type="defaultSemiBold">
-                      {item.serviceType}
-                    </ThemedText>
-                    <ThemedText type="default" style={styles.historyDate}>
-                      {item.date}
+            <View style={styles.detailStatItem}>
+              <ThemedText type="default" style={styles.detailStatLabel}>
+                Sati do Servisa
+              </ThemedText>
+              <ThemedText
+                type="title"
+                style={[
+                  styles.detailStatValue,
+                  hoursUntilService <= 0 && { color: dangerColor },
+                ]}
+              >
+                {Math.max(0, hoursUntilService)}h
+              </ThemedText>
+            </View>
+
+            <View style={styles.detailStatItem}>
+              <ThemedText type="default" style={styles.detailStatLabel}>
+                Zadnji Servis
+              </ThemedText>
+              <ThemedText type="default" style={styles.detailStatValue}>
+                {selectedEquipment.lastServiceDate}
+              </ThemedText>
+            </View>
+          </View>
+
+          <View style={styles.detailSection}>
+            <ThemedText type="subtitle">Istorija Servisa</ThemedText>
+            {serviceHistory.length > 0 ? (
+              <FlatList
+                data={serviceHistory}
+                renderItem={({ item }) => (
+                  <View style={styles.historyItem}>
+                    <View>
+                      <ThemedText type="defaultSemiBold">
+                        {item.serviceType}
+                      </ThemedText>
+                      <ThemedText type="default" style={styles.historyDate}>
+                        {item.date}
+                      </ThemedText>
+                    </View>
+                    <ThemedText type="defaultSemiBold" style={styles.historyCost}>
+                      €{item.cost}
                     </ThemedText>
                   </View>
-                  <ThemedText type="defaultSemiBold">€{item.cost}</ThemedText>
-                </View>
-              )}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
-            />
-          ) : (
-            <ThemedText type="default" style={styles.emptyText}>
-              Nema servisa
-            </ThemedText>
+                )}
+                keyExtractor={(item) => item.id}
+                scrollEnabled={false}
+              />
+            ) : (
+              <ThemedText type="default" style={styles.emptyText}>
+                Nema servisa
+              </ThemedText>
+            )}
+          </View>
+
+          {fuelHistory.length > 0 && (
+            <View style={styles.detailSection}>
+              <ThemedText type="subtitle">Istorija Goriva</ThemedText>
+              <FlatList
+                data={fuelHistory}
+                renderItem={({ item }) => (
+                  <View style={styles.historyItem}>
+                    <View>
+                      <ThemedText type="defaultSemiBold">
+                        {item.litersAdded}L
+                      </ThemedText>
+                      <ThemedText type="default" style={styles.historyDate}>
+                        {item.date}
+                      </ThemedText>
+                    </View>
+                    <ThemedText type="defaultSemiBold" style={styles.historyCost}>
+                      €{item.totalCost}
+                    </ThemedText>
+                  </View>
+                )}
+                keyExtractor={(item) => item.id}
+                scrollEnabled={false}
+              />
+            </View>
           )}
         </View>
-
-        {fuelHistory.length > 0 && (
-          <View style={styles.detailSection}>
-            <ThemedText type="subtitle">Istorija Goriva</ThemedText>
-            <FlatList
-              data={fuelHistory}
-              renderItem={({ item }) => (
-                <View style={styles.historyItem}>
-                  <View>
-                    <ThemedText type="defaultSemiBold">
-                      {item.litersAdded}L
-                    </ThemedText>
-                    <ThemedText type="default" style={styles.historyDate}>
-                      {item.date}
-                    </ThemedText>
-                  </View>
-                  <ThemedText type="defaultSemiBold">
-                    €{item.totalCost}
-                  </ThemedText>
-                </View>
-              )}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
-            />
-          </View>
-        )}
-      </ThemedView>
+      </ImageBackground>
     );
   };
 
@@ -242,17 +263,36 @@ export default function EquipmentScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
-        <ThemedText type="title">Oprema</ThemedText>
-      </View>
-      <FlatList
-        data={appState.equipment}
-        renderItem={renderEquipmentItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
+    <ImageBackground
+      source={require("@/assets/images/background.jpg")}
+      style={styles.container}
+      imageStyle={styles.backgroundImage}
+    >
+      <View
+        style={[
+          styles.overlay,
+          {
+            backgroundColor: isDark
+              ? "rgba(0, 0, 0, 0.6)"
+              : "rgba(255, 255, 255, 0.85)",
+          },
+        ]}
       />
-    </ThemedView>
+
+      <View style={[styles.content, { paddingTop: Math.max(insets.top, 16) }]}>
+        <View style={styles.header}>
+          <ThemedText type="title" style={styles.headerTitle}>
+            Oprema
+          </ThemedText>
+        </View>
+        <FlatList
+          data={appState.equipment}
+          renderItem={renderEquipmentItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+        />
+      </View>
+    </ImageBackground>
   );
 }
 
@@ -260,9 +300,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  backgroundImage: {
+    resizeMode: "cover",
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
+  content: {
+    flex: 1,
+    zIndex: 1,
+  },
   header: {
     paddingHorizontal: 16,
     paddingBottom: 16,
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: "bold",
   },
   listContent: {
     paddingHorizontal: 16,
@@ -273,6 +328,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.2)",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -318,10 +376,20 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     opacity: 0.7,
   },
+  statValue: {
+    color: "#FF9500",
+  },
+  statValueError: {
+    color: "#FF3B30",
+  },
   detailContainer: {
+    flex: 1,
+  },
+  detailContent: {
     flex: 1,
     paddingHorizontal: 16,
     paddingBottom: 16,
+    zIndex: 1,
   },
   closeButton: {
     alignSelf: "flex-end",
@@ -331,7 +399,7 @@ const styles = StyleSheet.create({
   closeButtonText: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#007AFF",
+    color: "#FF9500",
   },
   detailHeader: {
     flexDirection: "row",
@@ -349,7 +417,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 8,
     borderRadius: 8,
-    backgroundColor: "rgba(0, 122, 255, 0.1)",
+    backgroundColor: "rgba(255, 149, 0, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.3)",
   },
   detailStatLabel: {
     fontSize: 12,
@@ -358,6 +428,7 @@ const styles = StyleSheet.create({
   },
   detailStatValue: {
     fontSize: 18,
+    color: "#FF9500",
   },
   detailSection: {
     marginBottom: 24,
@@ -374,6 +445,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     opacity: 0.7,
+  },
+  historyCost: {
+    color: "#FF9500",
   },
   emptyText: {
     textAlign: "center",

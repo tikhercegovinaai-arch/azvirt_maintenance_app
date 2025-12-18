@@ -1,16 +1,19 @@
 import { useState } from "react";
-import { FlatList, Pressable, StyleSheet, View } from "react-native";
+import { FlatList, ImageBackground, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useAppData } from "@/hooks/use-app-data";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { SparePart } from "@/types";
 
 export default function InventoryScreen() {
   const insets = useSafeAreaInsets();
+  const colorScheme = useColorScheme();
   const { appState, getTotalInventoryValue } = useAppData();
   const [selectedPart, setSelectedPart] = useState<SparePart | null>(null);
+  const isDark = colorScheme === "dark";
   const successColor = "#34C759";
   const warningColor = "#FF9500";
   const dangerColor = "#FF3B30";
@@ -92,116 +95,133 @@ export default function InventoryScreen() {
     const status = getStockStatus(selectedPart);
 
     return (
-      <ThemedView style={[styles.detailContainer, { paddingTop: insets.top }]}>
-        <Pressable
-          style={styles.closeButton}
-          onPress={() => setSelectedPart(null)}
-        >
-          <ThemedText style={styles.closeButtonText}>✕</ThemedText>
-        </Pressable>
+      <ImageBackground
+        source={require("@/assets/images/background.jpg")}
+        style={styles.detailContainer}
+        imageStyle={styles.backgroundImage}
+      >
+        <View
+          style={[
+            styles.overlay,
+            {
+              backgroundColor: isDark
+                ? "rgba(0, 0, 0, 0.6)"
+                : "rgba(255, 255, 255, 0.85)",
+            },
+          ]}
+        />
 
-        <View style={styles.detailHeader}>
-          <ThemedText type="title">{selectedPart.name}</ThemedText>
-          <View
-            style={[
-              styles.statusBadge,
-              { backgroundColor: getStatusColor(status) },
-            ]}
+        <View style={[styles.detailContent, { paddingTop: insets.top }]}>
+          <Pressable
+            style={styles.closeButton}
+            onPress={() => setSelectedPart(null)}
           >
-            <ThemedText style={styles.statusText}>
-              {getStatusLabel(status)}
-            </ThemedText>
-          </View>
-        </View>
+            <ThemedText style={styles.closeButtonText}>✕</ThemedText>
+          </Pressable>
 
-        <View style={styles.detailInfo}>
-          <View style={styles.infoRow}>
-            <ThemedText type="default" style={styles.infoLabel}>
-              Kataloški Broj:
-            </ThemedText>
-            <ThemedText type="defaultSemiBold">
-              {selectedPart.partNumber}
-            </ThemedText>
-          </View>
-
-          <View style={styles.infoRow}>
-            <ThemedText type="default" style={styles.infoLabel}>
-              Oprema:
-            </ThemedText>
-            <ThemedText type="defaultSemiBold">
-              {selectedPart.equipment === "all"
-                ? "Sve"
-                : selectedPart.equipment === "mixer"
-                  ? "Mješalica"
-                  : selectedPart.equipment === "loader"
-                    ? "Utovarivač"
-                    : "Generator"}
-            </ThemedText>
-          </View>
-
-          <View style={styles.infoRow}>
-            <ThemedText type="default" style={styles.infoLabel}>
-              Trenutna Zaliha:
-            </ThemedText>
-            <ThemedText
-              type="defaultSemiBold"
-              style={{
-                color:
-                  selectedPart.currentStock <= selectedPart.minimumLevel
-                    ? dangerColor
-                    : "#007AFF",
-              }}
+          <View style={styles.detailHeader}>
+            <ThemedText type="title">{selectedPart.name}</ThemedText>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: getStatusColor(status) },
+              ]}
             >
-              {selectedPart.currentStock}
-            </ThemedText>
+              <ThemedText style={styles.statusText}>
+                {getStatusLabel(status)}
+              </ThemedText>
+            </View>
           </View>
 
-          <View style={styles.infoRow}>
-            <ThemedText type="default" style={styles.infoLabel}>
-              Minimalna Razina:
-            </ThemedText>
-            <ThemedText type="defaultSemiBold">
-              {selectedPart.minimumLevel}
-            </ThemedText>
-          </View>
-
-          <View style={styles.infoRow}>
-            <ThemedText type="default" style={styles.infoLabel}>
-              Cijena po Komadu:
-            </ThemedText>
-            <ThemedText type="defaultSemiBold">€{selectedPart.price}</ThemedText>
-          </View>
-
-          <View style={styles.infoRow}>
-            <ThemedText type="default" style={styles.infoLabel}>
-              Ukupna Vrijednost:
-            </ThemedText>
-            <ThemedText type="defaultSemiBold">
-              €{(selectedPart.currentStock * selectedPart.price).toFixed(2)}
-            </ThemedText>
-          </View>
-
-          {selectedPart.supplier && (
+          <View style={styles.detailInfo}>
             <View style={styles.infoRow}>
               <ThemedText type="default" style={styles.infoLabel}>
-                Dobavljač:
+                Kataloški Broj:
               </ThemedText>
               <ThemedText type="defaultSemiBold">
-                {selectedPart.supplier}
+                {selectedPart.partNumber}
               </ThemedText>
             </View>
-          )}
 
-          {selectedPart.notes && (
             <View style={styles.infoRow}>
               <ThemedText type="default" style={styles.infoLabel}>
-                Napomene:
+                Oprema:
               </ThemedText>
-              <ThemedText type="default">{selectedPart.notes}</ThemedText>
+              <ThemedText type="defaultSemiBold">
+                {selectedPart.equipment === "all"
+                  ? "Sve"
+                  : selectedPart.equipment === "mixer"
+                    ? "Mješalica"
+                    : selectedPart.equipment === "loader"
+                      ? "Utovarivač"
+                      : "Generator"}
+              </ThemedText>
             </View>
-          )}
+
+            <View style={styles.infoRow}>
+              <ThemedText type="default" style={styles.infoLabel}>
+                Trenutna Zaliha:
+              </ThemedText>
+              <ThemedText
+                type="defaultSemiBold"
+                style={{
+                  color:
+                    selectedPart.currentStock <= selectedPart.minimumLevel
+                      ? dangerColor
+                      : "#FF9500",
+                }}
+              >
+                {selectedPart.currentStock}
+              </ThemedText>
+            </View>
+
+            <View style={styles.infoRow}>
+              <ThemedText type="default" style={styles.infoLabel}>
+                Minimalna Razina:
+              </ThemedText>
+              <ThemedText type="defaultSemiBold">
+                {selectedPart.minimumLevel}
+              </ThemedText>
+            </View>
+
+            <View style={styles.infoRow}>
+              <ThemedText type="default" style={styles.infoLabel}>
+                Cijena po Komadu:
+              </ThemedText>
+              <ThemedText type="defaultSemiBold">€{selectedPart.price}</ThemedText>
+            </View>
+
+            <View style={styles.infoRow}>
+              <ThemedText type="default" style={styles.infoLabel}>
+                Ukupna Vrijednost:
+              </ThemedText>
+              <ThemedText type="defaultSemiBold" style={styles.valueText}>
+                €{(selectedPart.currentStock * selectedPart.price).toFixed(2)}
+              </ThemedText>
+            </View>
+
+            {selectedPart.supplier && (
+              <View style={styles.infoRow}>
+                <ThemedText type="default" style={styles.infoLabel}>
+                  Dobavljač:
+                </ThemedText>
+                <ThemedText type="defaultSemiBold">
+                  {selectedPart.supplier}
+                </ThemedText>
+              </View>
+            )}
+
+            {selectedPart.notes && (
+              <View style={styles.infoRow}>
+                <ThemedText type="default" style={styles.infoLabel}>
+                  Napomene:
+                </ThemedText>
+                <ThemedText type="default">{selectedPart.notes}</ThemedText>
+              </View>
+            )}
+          </View>
         </View>
-      </ThemedView>
+      </ImageBackground>
     );
   };
 
@@ -218,73 +238,95 @@ export default function InventoryScreen() {
   );
 
   return (
-    <ThemedView style={styles.container}>
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
-        <ThemedText type="title">Inventar</ThemedText>
-      </View>
-
-      <View style={styles.summaryCard}>
-        <View style={styles.summaryItem}>
-          <ThemedText type="default" style={styles.summaryLabel}>
-            Ukupna Vrijednost
-          </ThemedText>
-          <ThemedText type="title" style={styles.summaryValue}>
-            €{totalValue.toFixed(2)}
-          </ThemedText>
-        </View>
-
-        <View style={styles.summaryDivider} />
-
-        <View style={styles.summaryItem}>
-          <ThemedText type="default" style={styles.summaryLabel}>
-            Dijelovi
-          </ThemedText>
-          <ThemedText type="title" style={styles.summaryValue}>
-            {appState.spareParts.length}
-          </ThemedText>
-        </View>
-
-        <View style={styles.summaryDivider} />
-
-        <View style={styles.summaryItem}>
-          <ThemedText type="default" style={styles.summaryLabel}>
-            Kritični
-          </ThemedText>
-          <ThemedText
-            type="title"
-            style={[styles.summaryValue, { color: dangerColor }]}
-          >
-            {criticalParts.length}
-          </ThemedText>
-        </View>
-      </View>
-
-      {(criticalParts.length > 0 || lowParts.length > 0) && (
-        <View style={styles.alertsContainer}>
-          {criticalParts.length > 0 && (
-            <View style={[styles.alertBanner, { backgroundColor: dangerColor }]}>
-              <ThemedText style={styles.alertText}>
-                ⚠️ {criticalParts.length} dijelova na kritičnoj razini
-              </ThemedText>
-            </View>
-          )}
-          {lowParts.length > 0 && (
-            <View style={[styles.alertBanner, { backgroundColor: warningColor }]}>
-              <ThemedText style={styles.alertText}>
-                ⚠️ {lowParts.length} dijelova na niskoj razini
-              </ThemedText>
-            </View>
-          )}
-        </View>
-      )}
-
-      <FlatList
-        data={appState.spareParts}
-        renderItem={renderPartItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
+    <ImageBackground
+      source={require("@/assets/images/background.jpg")}
+      style={styles.container}
+      imageStyle={styles.backgroundImage}
+    >
+      <View
+        style={[
+          styles.overlay,
+          {
+            backgroundColor: isDark
+              ? "rgba(0, 0, 0, 0.6)"
+              : "rgba(255, 255, 255, 0.85)",
+          },
+        ]}
       />
-    </ThemedView>
+
+      <View style={[styles.content, { paddingTop: Math.max(insets.top, 16) }]}>
+        <View style={styles.header}>
+          <ThemedText type="title" style={styles.headerTitle}>
+            Inventar
+          </ThemedText>
+        </View>
+
+        <FlatList
+          data={appState.spareParts}
+          renderItem={renderPartItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          ListHeaderComponent={
+            <>
+              <View style={styles.summaryCard}>
+                <View style={styles.summaryItem}>
+                  <ThemedText type="default" style={styles.summaryLabel}>
+                    Ukupna Vrijednost
+                  </ThemedText>
+                  <ThemedText type="title" style={styles.summaryValue}>
+                    €{totalValue.toFixed(2)}
+                  </ThemedText>
+                </View>
+
+                <View style={styles.summaryDivider} />
+
+                <View style={styles.summaryItem}>
+                  <ThemedText type="default" style={styles.summaryLabel}>
+                    Dijelovi
+                  </ThemedText>
+                  <ThemedText type="title" style={styles.summaryValue}>
+                    {appState.spareParts.length}
+                  </ThemedText>
+                </View>
+
+                <View style={styles.summaryDivider} />
+
+                <View style={styles.summaryItem}>
+                  <ThemedText type="default" style={styles.summaryLabel}>
+                    Kritični
+                  </ThemedText>
+                  <ThemedText
+                    type="title"
+                    style={[styles.summaryValue, { color: dangerColor }]}
+                  >
+                    {criticalParts.length}
+                  </ThemedText>
+                </View>
+              </View>
+
+              {(criticalParts.length > 0 || lowParts.length > 0) && (
+                <View style={styles.alertsContainer}>
+                  {criticalParts.length > 0 && (
+                    <View style={[styles.alertBanner, { borderLeftColor: dangerColor }]}>
+                      <ThemedText style={styles.alertText}>
+                        ⚠️ {criticalParts.length} dijelova na kritičnoj razini
+                      </ThemedText>
+                    </View>
+                  )}
+                  {lowParts.length > 0 && (
+                    <View style={[styles.alertBanner, { borderLeftColor: warningColor }]}>
+                      <ThemedText style={styles.alertText}>
+                        ⚠️ {lowParts.length} dijelova na niskoj razini
+                      </ThemedText>
+                    </View>
+                  )}
+                </View>
+              )}
+            </>
+          }
+        />
+      </View>
+    </ImageBackground>
   );
 }
 
@@ -292,17 +334,37 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  backgroundImage: {
+    resizeMode: "cover",
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
+  content: {
+    flex: 1,
+    zIndex: 1,
+  },
   header: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: "bold",
+  },
+  listContent: {
     paddingHorizontal: 16,
     paddingBottom: 16,
   },
   summaryCard: {
     flexDirection: "row",
-    marginHorizontal: 16,
     marginBottom: 16,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: "rgba(0, 122, 255, 0.1)",
+    backgroundColor: "rgba(255, 149, 0, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.3)",
   },
   summaryItem: {
     flex: 1,
@@ -319,9 +381,9 @@ const styles = StyleSheet.create({
   },
   summaryValue: {
     fontSize: 18,
+    color: "#FF9500",
   },
   alertsContainer: {
-    paddingHorizontal: 16,
     marginBottom: 12,
     gap: 8,
   },
@@ -329,15 +391,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
+    borderLeftWidth: 4,
+    backgroundColor: "rgba(255, 149, 0, 0.1)",
   },
   alertText: {
-    color: "#fff",
     fontSize: 13,
     fontWeight: "600",
-  },
-  listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    color: "#1a1a1a",
   },
   partItem: {
     flexDirection: "row",
@@ -347,7 +407,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginBottom: 8,
     borderRadius: 8,
-    backgroundColor: "rgba(0, 0, 0, 0.02)",
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.2)",
   },
   partInfo: {
     flex: 1,
@@ -379,8 +441,12 @@ const styles = StyleSheet.create({
   },
   detailContainer: {
     flex: 1,
+  },
+  detailContent: {
+    flex: 1,
     paddingHorizontal: 16,
     paddingBottom: 16,
+    zIndex: 1,
   },
   closeButton: {
     alignSelf: "flex-end",
@@ -390,7 +456,7 @@ const styles = StyleSheet.create({
   closeButtonText: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#007AFF",
+    color: "#FF9500",
   },
   detailHeader: {
     flexDirection: "row",
@@ -412,5 +478,8 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontSize: 14,
     opacity: 0.7,
+  },
+  valueText: {
+    color: "#34C759",
   },
 });

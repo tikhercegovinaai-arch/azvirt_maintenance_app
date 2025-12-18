@@ -202,3 +202,27 @@
 - [x] Update next due dates for all weekly points
 - [x] Display success notification with count of completed items
 - [x] Add visual feedback/animation for bulk action
+
+
+## Design & Branding Updates
+
+### Background Image Implementation
+- [x] Copy background image to assets
+- [x] Create background image component
+- [x] Apply background to all screens
+- [x] Adjust opacity for readability
+- [ ] Implement parallax effect on scroll
+
+### Color Scheme Update
+- [x] Update primary color to orange (#FF9500)
+- [x] Update secondary color to blue (#0066CC)
+- [x] Update accent colors to match construction theme
+- [x] Update status colors (green, orange, red remain)
+- [x] Update text colors for contrast over background
+
+### Visual Design Improvements
+- [x] Add construction/industrial styling to cards
+- [x] Update button styles with orange theme
+- [ ] Add safety/industrial icons
+- [x] Improve typography hierarchy
+- [x] Add visual depth with shadows and borders

@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   Alert,
   FlatList,
+  ImageBackground,
   Pressable,
   StyleSheet,
   View,
@@ -10,18 +11,20 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { useAppData } from "@/hooks/use-app-data";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { LubricationPoint, ServiceRecord } from "@/types";
 
 type TabType = "lubrication" | "services";
 
 export default function MaintenanceScreen() {
   const insets = useSafeAreaInsets();
+  const colorScheme = useColorScheme();
   const { appState, markLubricationComplete, markAllWeeklyLubricationComplete } =
     useAppData();
   const [activeTab, setActiveTab] = useState<TabType>("lubrication");
   const [completing, setCompleting] = useState(false);
+  const isDark = colorScheme === "dark";
   const successColor = "#34C759";
   const warningColor = "#FF9500";
   const dangerColor = "#FF3B30";
@@ -151,7 +154,9 @@ export default function MaintenanceScreen() {
           )}
         </View>
         <View style={styles.serviceCost}>
-          <ThemedText type="defaultSemiBold">€{item.cost}</ThemedText>
+          <ThemedText type="defaultSemiBold" style={styles.costValue}>
+            €{item.cost}
+          </ThemedText>
           <ThemedText type="default" style={styles.technician}>
             {item.technician}
           </ThemedText>
@@ -161,140 +166,159 @@ export default function MaintenanceScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
-        <ThemedText type="title">Održavanje</ThemedText>
-      </View>
+    <ImageBackground
+      source={require("@/assets/images/background.jpg")}
+      style={styles.container}
+      imageStyle={styles.backgroundImage}
+    >
+      <View
+        style={[
+          styles.overlay,
+          {
+            backgroundColor: isDark
+              ? "rgba(0, 0, 0, 0.6)"
+              : "rgba(255, 255, 255, 0.85)",
+          },
+        ]}
+      />
 
-      <View style={styles.tabBar}>
-        <Pressable
-          style={[
-            styles.tab,
-            activeTab === "lubrication" && styles.activeTab,
-          ]}
-          onPress={() => setActiveTab("lubrication")}
-        >
-          <ThemedText
-            type="defaultSemiBold"
-            style={[
-              styles.tabText,
-              activeTab === "lubrication" && styles.activeTabText,
-            ]}
-          >
-            Podmazivanje
+      <View style={[styles.content, { paddingTop: Math.max(insets.top, 16) }]}>
+        <View style={styles.header}>
+          <ThemedText type="title" style={styles.headerTitle}>
+            Održavanje
           </ThemedText>
-        </Pressable>
-        <Pressable
-          style={[
-            styles.tab,
-            activeTab === "services" && styles.activeTab,
-          ]}
-          onPress={() => setActiveTab("services")}
-        >
-          <ThemedText
-            type="defaultSemiBold"
+        </View>
+
+        <View style={styles.tabBar}>
+          <Pressable
             style={[
-              styles.tabText,
-              activeTab === "services" && styles.activeTabText,
+              styles.tab,
+              activeTab === "lubrication" && styles.activeTab,
             ]}
+            onPress={() => setActiveTab("lubrication")}
           >
-            Servisi
-          </ThemedText>
-        </Pressable>
+            <ThemedText
+              type="defaultSemiBold"
+              style={[
+                styles.tabText,
+                activeTab === "lubrication" && styles.activeTabText,
+              ]}
+            >
+              Podmazivanje
+            </ThemedText>
+          </Pressable>
+          <Pressable
+            style={[
+              styles.tab,
+              activeTab === "services" && styles.activeTab,
+            ]}
+            onPress={() => setActiveTab("services")}
+          >
+            <ThemedText
+              type="defaultSemiBold"
+              style={[
+                styles.tabText,
+                activeTab === "services" && styles.activeTabText,
+              ]}
+            >
+              Servisi
+            </ThemedText>
+          </Pressable>
+        </View>
+
+        {activeTab === "lubrication" ? (
+          <FlatList
+            data={[
+              ...lubricationByFrequency.daily,
+              ...lubricationByFrequency.weekly,
+              ...lubricationByFrequency.monthly,
+            ]}
+            renderItem={renderLubricationPoint}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContent}
+            ListHeaderComponent={
+              <>
+                {/* Complete All Weekly Button */}
+                {lubricationByFrequency.weekly.length > 0 && (
+                  <View style={styles.bulkActionSection}>
+                    <Pressable
+                      style={[
+                        styles.completeAllButton,
+                        completing && styles.completeAllButtonDisabled,
+                      ]}
+                      onPress={handleCompleteAllWeekly}
+                      disabled={completing}
+                    >
+                      {completing ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <>
+                          <ThemedText style={styles.completeAllButtonText}>
+                            ✓ Označi sve sedmične kao obavljene
+                          </ThemedText>
+                          {weeklyDueCount > 0 && (
+                            <View style={styles.badgeCount}>
+                              <ThemedText style={styles.badgeCountText}>
+                                {weeklyDueCount}
+                              </ThemedText>
+                            </View>
+                          )}
+                        </>
+                      )}
+                    </Pressable>
+                    <ThemedText type="default" style={styles.bulkActionInfo}>
+                      Ukupno sedmičnih točaka: {lubricationByFrequency.weekly.length}
+                    </ThemedText>
+                  </View>
+                )}
+
+                {/* Daily Section */}
+                {lubricationByFrequency.daily.length > 0 && (
+                  <View style={styles.frequencySection}>
+                    <ThemedText type="subtitle" style={styles.frequencyTitle}>
+                      Dnevno ({lubricationByFrequency.daily.length})
+                    </ThemedText>
+                  </View>
+                )}
+              </>
+            }
+            ListFooterComponent={
+              <>
+                {/* Weekly Section */}
+                {lubricationByFrequency.weekly.length > 0 && (
+                  <View style={styles.frequencySection}>
+                    <ThemedText type="subtitle" style={styles.frequencyTitle}>
+                      Sedmično ({lubricationByFrequency.weekly.length})
+                    </ThemedText>
+                  </View>
+                )}
+
+                {/* Monthly Section */}
+                {lubricationByFrequency.monthly.length > 0 && (
+                  <View style={styles.frequencySection}>
+                    <ThemedText type="subtitle" style={styles.frequencyTitle}>
+                      Mjesečno ({lubricationByFrequency.monthly.length})
+                    </ThemedText>
+                  </View>
+                )}
+              </>
+            }
+          />
+        ) : (
+          <FlatList
+            data={appState.serviceRecords}
+            renderItem={renderServiceRecord}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContent}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <ThemedText type="default">Nema servisa</ThemedText>
+              </View>
+            }
+          />
+        )}
       </View>
-
-      {activeTab === "lubrication" ? (
-        <FlatList
-          data={[
-            ...lubricationByFrequency.daily,
-            ...lubricationByFrequency.weekly,
-            ...lubricationByFrequency.monthly,
-          ]}
-          renderItem={renderLubricationPoint}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          ListHeaderComponent={
-            <>
-              {/* Complete All Weekly Button */}
-              {lubricationByFrequency.weekly.length > 0 && (
-                <View style={styles.bulkActionSection}>
-                  <Pressable
-                    style={[
-                      styles.completeAllButton,
-                      completing && styles.completeAllButtonDisabled,
-                    ]}
-                    onPress={handleCompleteAllWeekly}
-                    disabled={completing}
-                  >
-                    {completing ? (
-                      <ActivityIndicator color="#fff" />
-                    ) : (
-                      <>
-                        <ThemedText style={styles.completeAllButtonText}>
-                          ✓ Označi sve sedmične kao obavljene
-                        </ThemedText>
-                        {weeklyDueCount > 0 && (
-                          <View style={styles.badgeCount}>
-                            <ThemedText style={styles.badgeCountText}>
-                              {weeklyDueCount}
-                            </ThemedText>
-                          </View>
-                        )}
-                      </>
-                    )}
-                  </Pressable>
-                  <ThemedText type="default" style={styles.bulkActionInfo}>
-                    Ukupno sedmičnih točaka: {lubricationByFrequency.weekly.length}
-                  </ThemedText>
-                </View>
-              )}
-
-              {/* Daily Section */}
-              {lubricationByFrequency.daily.length > 0 && (
-                <View style={styles.frequencySection}>
-                  <ThemedText type="subtitle" style={styles.frequencyTitle}>
-                    Dnevno ({lubricationByFrequency.daily.length})
-                  </ThemedText>
-                </View>
-              )}
-            </>
-          }
-          ListFooterComponent={
-            <>
-              {/* Weekly Section */}
-              {lubricationByFrequency.weekly.length > 0 && (
-                <View style={styles.frequencySection}>
-                  <ThemedText type="subtitle" style={styles.frequencyTitle}>
-                    Sedmično ({lubricationByFrequency.weekly.length})
-                  </ThemedText>
-                </View>
-              )}
-
-              {/* Monthly Section */}
-              {lubricationByFrequency.monthly.length > 0 && (
-                <View style={styles.frequencySection}>
-                  <ThemedText type="subtitle" style={styles.frequencyTitle}>
-                    Mjesečno ({lubricationByFrequency.monthly.length})
-                  </ThemedText>
-                </View>
-              )}
-            </>
-          }
-        />
-      ) : (
-        <FlatList
-          data={appState.serviceRecords}
-          renderItem={renderServiceRecord}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <ThemedText type="default">Nema servisa</ThemedText>
-            </View>
-          }
-        />
-      )}
-    </ThemedView>
+    </ImageBackground>
   );
 }
 
@@ -302,9 +326,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  backgroundImage: {
+    resizeMode: "cover",
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
+  content: {
+    flex: 1,
+    zIndex: 1,
+  },
   header: {
     paddingHorizontal: 16,
     paddingBottom: 16,
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: "bold",
   },
   tabBar: {
     flexDirection: "row",
@@ -312,7 +351,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     gap: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(0, 0, 0, 0.1)",
+    borderBottomColor: "rgba(255, 149, 0, 0.2)",
   },
   tab: {
     flex: 1,
@@ -322,11 +361,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   activeTab: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#FF9500",
   },
   tabText: {
     fontSize: 14,
-    color: "#8E8E93",
+    color: "#999999",
   },
   activeTabText: {
     color: "#fff",
@@ -381,6 +420,7 @@ const styles = StyleSheet.create({
   frequencyTitle: {
     fontSize: 16,
     marginBottom: 8,
+    fontWeight: "600",
   },
   lubricationItem: {
     flexDirection: "row",
@@ -390,7 +430,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginBottom: 8,
     borderRadius: 8,
-    backgroundColor: "rgba(0, 0, 0, 0.02)",
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.2)",
   },
   lubricationInfo: {
     flex: 1,
@@ -423,7 +465,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginBottom: 8,
     borderRadius: 8,
-    backgroundColor: "rgba(0, 0, 0, 0.02)",
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.2)",
   },
   serviceInfo: {
     flex: 1,
@@ -447,6 +491,9 @@ const styles = StyleSheet.create({
   serviceCost: {
     alignItems: "flex-end",
     marginLeft: 12,
+  },
+  costValue: {
+    color: "#FF9500",
   },
   technician: {
     fontSize: 12,

@@ -1,29 +1,45 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * AZVIRT Construction Theme Colors
+ * Inspired by the AZVIRT 35 years anniversary safety helmet image
+ * Primary: Orange (#FF9500) - Safety and visibility
+ * Secondary: Blue (#0066CC) - Trust and professionalism
  */
 
 import { Platform } from "react-native";
 
-const tintColorLight = "#007AFF"; // iOS Blue
-const tintColorDark = "#fff";
+// AZVIRT Construction Theme Colors
+const tintColorLight = "#FF9500"; // Orange - Primary color
+const tintColorDark = "#FF9500"; // Orange for dark mode
+const secondaryColor = "#0066CC"; // Blue - Secondary color
 
 export const Colors = {
   light: {
-    text: "#11181C",
-    background: "#fff",
-    tint: tintColorLight,
-    icon: "#687076",
-    tabIconDefault: "#687076",
-    tabIconSelected: tintColorLight,
+    text: "#1a1a1a",
+    background: "rgba(255, 255, 255, 0.95)",
+    tint: "#FF9500", // Orange primary
+    secondary: "#0066CC", // Blue secondary
+    icon: "#666666",
+    tabIconDefault: "#999999",
+    tabIconSelected: "#FF9500",
+    success: "#34C759",
+    warning: "#FF9500",
+    danger: "#FF3B30",
+    cardBackground: "rgba(255, 255, 255, 0.9)",
+    borderColor: "#E0E0E0",
   },
   dark: {
     text: "#ECEDEE",
-    background: "#151718",
-    tint: tintColorDark,
+    background: "rgba(21, 23, 24, 0.95)",
+    tint: "#FF9500",
+    secondary: "#66B3FF",
     icon: "#9BA1A6",
     tabIconDefault: "#9BA1A6",
-    tabIconSelected: tintColorDark,
+    tabIconSelected: "#FF9500",
+    success: "#34C759",
+    warning: "#FF9500",
+    danger: "#FF3B30",
+    cardBackground: "rgba(50, 52, 53, 0.9)",
+    borderColor: "#404040",
   },
 };
 

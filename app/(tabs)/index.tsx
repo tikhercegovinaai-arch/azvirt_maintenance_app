@@ -5,6 +5,7 @@ import {
   RefreshControl,
   StyleSheet,
   View,
+  ImageBackground,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -14,14 +15,18 @@ import { useAppData } from "@/hooks/use-app-data";
 import { LogHoursModal } from "@/components/modals/log-hours-modal";
 import { RecordServiceModal } from "@/components/modals/record-service-modal";
 import { AddFuelModal } from "@/components/modals/add-fuel-modal";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
+  const colorScheme = useColorScheme();
   const { appState, alerts, loading } = useAppData();
   const [refreshing, setRefreshing] = useState(false);
   const [logHoursOpen, setLogHoursOpen] = useState(false);
   const [recordServiceOpen, setRecordServiceOpen] = useState(false);
   const [addFuelOpen, setAddFuelOpen] = useState(false);
+
+  const isDark = colorScheme === "dark";
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -107,7 +112,7 @@ export default function DashboardScreen() {
         ? "#FF3B30"
         : item.type === "warning"
           ? "#FF9500"
-          : "#007AFF";
+          : "#0066CC";
 
     return (
       <View style={[styles.alertBox, { borderLeftColor: alertColor }]}>
@@ -131,75 +136,95 @@ export default function DashboardScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
-        <ThemedText type="title">Kontrolna Tabla</ThemedText>
-      </View>
-
-      <FlatList
-        data={appState.equipment}
-        renderItem={renderEquipmentCard}
-        keyExtractor={(item) => item.id}
-        ListHeaderComponent={
-          <>
-            {/* Quick Action Buttons */}
-            <View style={styles.quickActionsSection}>
-              <ThemedText type="subtitle" style={styles.sectionTitle}>
-                Brze Akcije
-              </ThemedText>
-              <View style={styles.quickActionsGrid}>
-                <Pressable
-                  style={styles.quickActionButton}
-                  onPress={() => setLogHoursOpen(true)}
-                >
-                  <ThemedText style={styles.quickActionIcon}>⏱️</ThemedText>
-                  <ThemedText style={styles.quickActionLabel}>Unesi Sate</ThemedText>
-                </Pressable>
-                <Pressable
-                  style={styles.quickActionButton}
-                  onPress={() => setRecordServiceOpen(true)}
-                >
-                  <ThemedText style={styles.quickActionIcon}>🔧</ThemedText>
-                  <ThemedText style={styles.quickActionLabel}>Servis</ThemedText>
-                </Pressable>
-                <Pressable
-                  style={styles.quickActionButton}
-                  onPress={() => setAddFuelOpen(true)}
-                >
-                  <ThemedText style={styles.quickActionIcon}>⛽</ThemedText>
-                  <ThemedText style={styles.quickActionLabel}>Gorivo</ThemedText>
-                </Pressable>
-              </View>
-            </View>
-
-            {/* Active Alerts */}
-            {alerts.length > 0 && (
-              <View style={styles.alertsSection}>
-                <ThemedText type="subtitle" style={styles.sectionTitle}>
-                  Aktivna Upozorenja ({alerts.length})
-                </ThemedText>
-                <FlatList
-                  data={alerts}
-                  renderItem={renderAlert}
-                  keyExtractor={(item) => item.id}
-                  scrollEnabled={false}
-                />
-              </View>
-            )}
-
-            {/* Equipment Section */}
-            <View style={styles.equipmentSection}>
-              <ThemedText type="subtitle" style={styles.sectionTitle}>
-                Status Opreme
-              </ThemedText>
-            </View>
-          </>
-        }
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+    <ImageBackground
+      source={require("@/assets/images/background.jpg")}
+      style={styles.container}
+      imageStyle={styles.backgroundImage}
+    >
+      {/* Overlay for readability */}
+      <View
+        style={[
+          styles.overlay,
+          {
+            backgroundColor: isDark
+              ? "rgba(0, 0, 0, 0.6)"
+              : "rgba(255, 255, 255, 0.85)",
+          },
+        ]}
       />
+
+      <View style={[styles.content, { paddingTop: Math.max(insets.top, 16) }]}>
+        <View style={styles.header}>
+          <ThemedText type="title" style={styles.headerTitle}>
+            Kontrolna Tabla
+          </ThemedText>
+        </View>
+
+        <FlatList
+          data={appState.equipment}
+          renderItem={renderEquipmentCard}
+          keyExtractor={(item) => item.id}
+          ListHeaderComponent={
+            <>
+              {/* Quick Action Buttons */}
+              <View style={styles.quickActionsSection}>
+                <ThemedText type="subtitle" style={styles.sectionTitle}>
+                  Brze Akcije
+                </ThemedText>
+                <View style={styles.quickActionsGrid}>
+                  <Pressable
+                    style={styles.quickActionButton}
+                    onPress={() => setLogHoursOpen(true)}
+                  >
+                    <ThemedText style={styles.quickActionIcon}>⏱️</ThemedText>
+                    <ThemedText style={styles.quickActionLabel}>Unesi Sate</ThemedText>
+                  </Pressable>
+                  <Pressable
+                    style={styles.quickActionButton}
+                    onPress={() => setRecordServiceOpen(true)}
+                  >
+                    <ThemedText style={styles.quickActionIcon}>🔧</ThemedText>
+                    <ThemedText style={styles.quickActionLabel}>Servis</ThemedText>
+                  </Pressable>
+                  <Pressable
+                    style={styles.quickActionButton}
+                    onPress={() => setAddFuelOpen(true)}
+                  >
+                    <ThemedText style={styles.quickActionIcon}>⛽</ThemedText>
+                    <ThemedText style={styles.quickActionLabel}>Gorivo</ThemedText>
+                  </Pressable>
+                </View>
+              </View>
+
+              {/* Active Alerts */}
+              {alerts.length > 0 && (
+                <View style={styles.alertsSection}>
+                  <ThemedText type="subtitle" style={styles.sectionTitle}>
+                    Aktivna Upozorenja ({alerts.length})
+                  </ThemedText>
+                  <FlatList
+                    data={alerts}
+                    renderItem={renderAlert}
+                    keyExtractor={(item) => item.id}
+                    scrollEnabled={false}
+                  />
+                </View>
+              )}
+
+              {/* Equipment Section */}
+              <View style={styles.equipmentSection}>
+                <ThemedText type="subtitle" style={styles.sectionTitle}>
+                  Status Opreme
+                </ThemedText>
+              </View>
+            </>
+          }
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        />
+      </View>
 
       {/* Modals */}
       <LogHoursModal
@@ -214,7 +239,7 @@ export default function DashboardScreen() {
         isOpen={addFuelOpen}
         onClose={() => setAddFuelOpen(false)}
       />
-    </ThemedView>
+    </ImageBackground>
   );
 }
 
@@ -222,9 +247,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  backgroundImage: {
+    resizeMode: "cover",
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
+  content: {
+    flex: 1,
+    zIndex: 1,
+  },
   header: {
     paddingHorizontal: 16,
     paddingBottom: 16,
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: "bold",
   },
   listContent: {
     paddingHorizontal: 16,
@@ -236,6 +276,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     marginBottom: 12,
     fontSize: 18,
+    fontWeight: "600",
   },
   quickActionsGrid: {
     flexDirection: "row",
@@ -247,10 +288,12 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: "rgba(0, 122, 255, 0.1)",
+    backgroundColor: "rgba(255, 149, 0, 0.15)",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.3)",
   },
   quickActionIcon: {
     fontSize: 24,
@@ -258,7 +301,7 @@ const styles = StyleSheet.create({
   quickActionLabel: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#007AFF",
+    color: "#FF9500",
   },
   alertsSection: {
     marginBottom: 24,
@@ -269,7 +312,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderLeftWidth: 4,
     marginBottom: 8,
-    backgroundColor: "rgba(0, 0, 0, 0.02)",
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -280,6 +323,7 @@ const styles = StyleSheet.create({
   },
   alertTitle: {
     fontSize: 14,
+    fontWeight: "600",
   },
   alertMessage: {
     fontSize: 12,
@@ -300,7 +344,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: "rgba(0, 0, 0, 0.02)",
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.2)",
   },
   cardHeader: {
     marginBottom: 12,
@@ -313,6 +359,7 @@ const styles = StyleSheet.create({
   equipmentName: {
     fontSize: 16,
     flex: 1,
+    color: "#1a1a1a",
   },
   statusBadge: {
     paddingVertical: 4,
@@ -335,10 +382,12 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 13,
     opacity: 0.7,
+    color: "#1a1a1a",
   },
   statValue: {
     fontSize: 14,
     fontWeight: "600",
+    color: "#FF9500",
   },
   statValueError: {
     color: "#FF3B30",
