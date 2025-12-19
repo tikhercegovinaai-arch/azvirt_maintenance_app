@@ -51,7 +51,14 @@ export default function EquipmentScreen() {
 
     return (
       <Pressable
-        style={styles.equipmentItem}
+        style={[
+          styles.equipmentItem,
+          {
+            backgroundColor: isDark
+              ? "rgba(30, 30, 30, 0.85)"
+              : "rgba(255, 255, 255, 0.85)",
+          },
+        ]}
         onPress={() => setSelectedEquipment(item)}
       >
         <View style={styles.itemHeader}>
@@ -72,7 +79,14 @@ export default function EquipmentScreen() {
         </View>
 
         <View style={styles.itemStats}>
-          <View style={styles.statItem}>
+          <View style={[
+            styles.statItem,
+            {
+              backgroundColor: isDark
+                ? "rgba(255, 149, 0, 0.1)"
+                : "rgba(255, 149, 0, 0.08)",
+            },
+          ]}>
             <ThemedText type="default" style={styles.statLabel}>
               Sati
             </ThemedText>
@@ -80,7 +94,14 @@ export default function EquipmentScreen() {
               {item.currentHours}h
             </ThemedText>
           </View>
-          <View style={styles.statItem}>
+          <View style={[
+            styles.statItem,
+            {
+              backgroundColor: isDark
+                ? "rgba(255, 149, 0, 0.1)"
+                : "rgba(255, 149, 0, 0.08)",
+            },
+          ]}>
             <ThemedText type="default" style={styles.statLabel}>
               Do Servisa
             </ThemedText>
@@ -94,7 +115,14 @@ export default function EquipmentScreen() {
               {Math.max(0, hoursUntilService)}h
             </ThemedText>
           </View>
-          <View style={styles.statItem}>
+          <View style={[
+            styles.statItem,
+            {
+              backgroundColor: isDark
+                ? "rgba(255, 149, 0, 0.1)"
+                : "rgba(255, 149, 0, 0.08)",
+            },
+          ]}>
             <ThemedText type="default" style={styles.statLabel}>
               Interval
             </ThemedText>
@@ -119,7 +147,7 @@ export default function EquipmentScreen() {
             styles.overlay,
             {
               backgroundColor: isDark
-                ? "rgba(0, 0, 0, 0.6)"
+                ? "rgba(0, 0, 0, 0.75)"
                 : "rgba(255, 255, 255, 0.85)",
             },
           ]}
@@ -183,7 +211,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.85)",
     borderWidth: 1,
     borderColor: "rgba(255, 149, 0, 0.2)",
   },
@@ -221,7 +248,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 8,
     borderRadius: 8,
-    backgroundColor: "rgba(255, 149, 0, 0.1)",
     alignItems: "center",
     borderWidth: 1,
     borderColor: "rgba(255, 149, 0, 0.2)",

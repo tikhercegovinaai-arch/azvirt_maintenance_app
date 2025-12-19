@@ -1,245 +1,294 @@
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import {
   FlatList,
+  ImageBackground,
+  Modal,
   Pressable,
-  RefreshControl,
+  ScrollView,
   StyleSheet,
   View,
-  ImageBackground,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { useAppData } from "@/hooks/use-app-data";
 import { LogHoursModal } from "@/components/modals/log-hours-modal";
 import { RecordServiceModal } from "@/components/modals/record-service-modal";
 import { AddFuelModal } from "@/components/modals/add-fuel-modal";
+import { useAppData } from "@/hooks/use-app-data";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useThemeColor } from "@/hooks/use-theme-color";
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
-  const { appState, alerts, loading } = useAppData();
-  const [refreshing, setRefreshing] = useState(false);
-  const [logHoursOpen, setLogHoursOpen] = useState(false);
-  const [recordServiceOpen, setRecordServiceOpen] = useState(false);
-  const [addFuelOpen, setAddFuelOpen] = useState(false);
-
+  const { appState } = useAppData();
   const isDark = colorScheme === "dark";
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  }, []);
+  const [showLogHours, setShowLogHours] = useState(false);
+  const [showRecordService, setShowRecordService] = useState(false);
+  const [showAddFuel, setShowAddFuel] = useState(false);
+
+  const successColor = "#34C759";
+  const warningColor = "#FF9500";
+  const dangerColor = "#FF3B30";
 
   const getEquipmentStatus = (equipment: any) => {
     const hoursSinceLastService = equipment.currentHours - equipment.lastServiceHours;
     const hoursUntilService = equipment.serviceIntervalHours - hoursSinceLastService;
 
-    if (hoursUntilService <= 0) {
-      return { status: "overdue", color: "#FF3B30", label: "Zakašnjelo" };
-    } else if (hoursUntilService <= 50) {
-      return { status: "warning", color: "#FF9500", label: "Uskoro" };
-    }
-    return { status: "good", color: "#34C759", label: "Dobro" };
+    if (hoursUntilService <= 0) return "overdue";
+    if (hoursUntilService <= 50) return "warning";
+    return "good";
   };
 
-  const renderEquipmentCard = ({ item }: any) => {
-    const statusInfo = getEquipmentStatus(item);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "good":
+        return successColor;
+      case "warning":
+        return warningColor;
+      case "overdue":
+        return dangerColor;
+      default:
+        return "#8E8E93";
+    }
+  };
+
+  const alerts = [
+    ...appState.equipment
+      .filter((eq) => getEquipmentStatus(eq) !== "good")
+      .map((eq) => ({
+        id: `eq-${eq.id}`,
+        type: getEquipmentStatus(eq) === "overdue" ? "danger" : "warning",
+        title:
+          getEquipmentStatus(eq) === "overdue"
+            ? "Servis Zakašnjen"
+            : "Niska Zalihа",
+        description:
+          getEquipmentStatus(eq) === "overdue"
+            ? `${eq.displayName} trebao bi servis`
+            : `${eq.displayName} - Dostupno: ${Math.max(0, eq.serviceIntervalHours - (eq.currentHours - eq.lastServiceHours))}h`,
+        color: getStatusColor(getEquipmentStatus(eq)),
+      })),
+    ...appState.spareParts
+      .filter((part) => part.status !== "adequate")
+      .map((part) => ({
+        id: `part-${part.id}`,
+        type: part.status === "critical" ? "danger" : "warning",
+        title: part.status === "critical" ? "Niska Zalihа" : "Azuriraj Zalihu",
+        description: `${part.name} - Dostupno: ${part.currentStock}. Minimum: ${part.minimumLevel}`,
+        color: part.status === "critical" ? dangerColor : warningColor,
+      })),
+  ];
+
+  const renderAlertItem = ({ item }: { item: any }) => (
+    <View
+      style={[
+        styles.alertItem,
+        {
+          borderLeftColor: item.color,
+          backgroundColor: isDark
+            ? "rgba(30, 30, 30, 0.9)"
+            : "rgba(255, 255, 255, 0.9)",
+        },
+      ]}
+    >
+      <View style={styles.alertContent}>
+        <ThemedText type="defaultSemiBold" style={{ color: item.color }}>
+          {item.title}
+        </ThemedText>
+        <ThemedText type="default" style={styles.alertDescription}>
+          {item.description}
+        </ThemedText>
+      </View>
+    </View>
+  );
+
+  const renderEquipmentCard = ({ item }: { item: any }) => {
+    const status = getEquipmentStatus(item);
     const hoursSinceLastService = item.currentHours - item.lastServiceHours;
     const hoursUntilService = item.serviceIntervalHours - hoursSinceLastService;
 
     return (
-      <View style={styles.equipmentCard}>
-        <View style={styles.cardHeader}>
-          <View style={styles.cardTitleSection}>
-            <ThemedText type="defaultSemiBold" style={styles.equipmentName}>
-              {item.displayName}
-            </ThemedText>
-            <View
-              style={[
-                styles.statusBadge,
-                { backgroundColor: statusInfo.color },
-              ]}
-            >
-              <ThemedText style={styles.statusText}>{statusInfo.label}</ThemedText>
-            </View>
-          </View>
-        </View>
-
+      <View
+        style={[
+          styles.equipmentCard,
+          {
+            backgroundColor: isDark
+              ? "rgba(30, 30, 30, 0.85)"
+              : "rgba(255, 255, 255, 0.85)",
+          },
+        ]}
+      >
+        <ThemedText type="defaultSemiBold" style={styles.equipmentName}>
+          {item.displayName}
+        </ThemedText>
         <View style={styles.cardStats}>
-          <View style={styles.stat}>
+          <View style={styles.statBox}>
             <ThemedText type="default" style={styles.statLabel}>
-              Trenutni Sati:
+              Sati
             </ThemedText>
             <ThemedText type="defaultSemiBold" style={styles.statValue}>
               {item.currentHours}h
             </ThemedText>
           </View>
-
-          <View style={styles.stat}>
+          <View style={styles.statBox}>
             <ThemedText type="default" style={styles.statLabel}>
-              Sati do Servisa:
+              Do Servisa
             </ThemedText>
             <ThemedText
               type="defaultSemiBold"
               style={[
                 styles.statValue,
-                hoursUntilService <= 0 && styles.statValueError,
+                { color: getStatusColor(status) },
               ]}
             >
-              {Math.max(0, hoursUntilService)}h
+              {hoursUntilService}h
             </ThemedText>
           </View>
-
-          <View style={styles.stat}>
-            <ThemedText type="default" style={styles.statLabel}>
-              Zadnji Servis:
-            </ThemedText>
-            <ThemedText type="defaultSemiBold" style={styles.statValue}>
-              {item.lastServiceDate}
-            </ThemedText>
-          </View>
+          <View
+            style={[
+              styles.statusDot,
+              { backgroundColor: getStatusColor(status) },
+            ]}
+          />
         </View>
-      </View>
-    );
-  };
-
-  const renderAlert = ({ item }: any) => {
-    const alertColor =
-      item.type === "overdue"
-        ? "#FF3B30"
-        : item.type === "warning"
-          ? "#FF9500"
-          : "#0066CC";
-
-    return (
-      <View style={[styles.alertBox, { borderLeftColor: alertColor }]}>
-        <View style={styles.alertContent}>
-          <ThemedText type="defaultSemiBold" style={styles.alertTitle}>
-            {item.title}
-          </ThemedText>
-          <ThemedText type="default" style={styles.alertMessage}>
-            {item.message}
-          </ThemedText>
-        </View>
-        {item.actionLabel && (
-          <Pressable style={styles.alertAction}>
-            <ThemedText style={[styles.alertActionText, { color: alertColor }]}>
-              {item.actionLabel}
-            </ThemedText>
-          </Pressable>
-        )}
       </View>
     );
   };
 
   return (
-    <ImageBackground
-      source={require("@/assets/images/background.jpg")}
-      style={styles.container}
-      imageStyle={styles.backgroundImage}
-    >
-      {/* Overlay for readability */}
-      <View
-        style={[
-          styles.overlay,
-          {
-            backgroundColor: isDark
-              ? "rgba(0, 0, 0, 0.6)"
-              : "rgba(255, 255, 255, 0.85)",
-          },
-        ]}
-      />
-
-      <View style={[styles.content, { paddingTop: Math.max(insets.top, 16) }]}>
-        <View style={styles.header}>
-          <ThemedText type="title" style={styles.headerTitle}>
-            Kontrolna Tabla
-          </ThemedText>
-        </View>
-
-        <FlatList
-          data={appState.equipment}
-          renderItem={renderEquipmentCard}
-          keyExtractor={(item) => item.id}
-          ListHeaderComponent={
-            <>
-              {/* Quick Action Buttons */}
-              <View style={styles.quickActionsSection}>
-                <ThemedText type="subtitle" style={styles.sectionTitle}>
-                  Brze Akcije
-                </ThemedText>
-                <View style={styles.quickActionsGrid}>
-                  <Pressable
-                    style={styles.quickActionButton}
-                    onPress={() => setLogHoursOpen(true)}
-                  >
-                    <ThemedText style={styles.quickActionIcon}>⏱️</ThemedText>
-                    <ThemedText style={styles.quickActionLabel}>Unesi Sate</ThemedText>
-                  </Pressable>
-                  <Pressable
-                    style={styles.quickActionButton}
-                    onPress={() => setRecordServiceOpen(true)}
-                  >
-                    <ThemedText style={styles.quickActionIcon}>🔧</ThemedText>
-                    <ThemedText style={styles.quickActionLabel}>Servis</ThemedText>
-                  </Pressable>
-                  <Pressable
-                    style={styles.quickActionButton}
-                    onPress={() => setAddFuelOpen(true)}
-                  >
-                    <ThemedText style={styles.quickActionIcon}>⛽</ThemedText>
-                    <ThemedText style={styles.quickActionLabel}>Gorivo</ThemedText>
-                  </Pressable>
-                </View>
-              </View>
-
-              {/* Active Alerts */}
-              {alerts.length > 0 && (
-                <View style={styles.alertsSection}>
-                  <ThemedText type="subtitle" style={styles.sectionTitle}>
-                    Aktivna Upozorenja ({alerts.length})
-                  </ThemedText>
-                  <FlatList
-                    data={alerts}
-                    renderItem={renderAlert}
-                    keyExtractor={(item) => item.id}
-                    scrollEnabled={false}
-                  />
-                </View>
-              )}
-
-              {/* Equipment Section */}
-              <View style={styles.equipmentSection}>
-                <ThemedText type="subtitle" style={styles.sectionTitle}>
-                  Status Opreme
-                </ThemedText>
-              </View>
-            </>
-          }
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
+    <>
+      <ImageBackground
+        source={require("@/assets/images/background.jpg")}
+        style={styles.container}
+        imageStyle={styles.backgroundImage}
+      >
+        <View
+          style={[
+            styles.overlay,
+            {
+              backgroundColor: isDark
+                ? "rgba(0, 0, 0, 0.75)"
+                : "rgba(255, 255, 255, 0.85)",
+            },
+          ]}
         />
-      </View>
 
-      {/* Modals */}
-      <LogHoursModal
-        isOpen={logHoursOpen}
-        onClose={() => setLogHoursOpen(false)}
-      />
+        <ScrollView
+          style={[styles.content, { paddingTop: Math.max(insets.top, 16) }]}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.header}>
+            <ThemedText type="title" style={styles.headerTitle}>
+              Kontrolna Tabla
+            </ThemedText>
+          </View>
+
+          <View style={styles.quickActionsSection}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>
+              Brze Akcije
+            </ThemedText>
+            <View style={styles.quickActionsRow}>
+              <Pressable
+                style={[
+                  styles.quickActionButton,
+                  {
+                    backgroundColor: isDark
+                      ? "rgba(255, 149, 0, 0.2)"
+                      : "rgba(255, 149, 0, 0.15)",
+                  },
+                ]}
+                onPress={() => setShowLogHours(true)}
+              >
+                <ThemedText style={styles.quickActionIcon}>⏱</ThemedText>
+                <ThemedText
+                  type="defaultSemiBold"
+                  style={styles.quickActionText}
+                >
+                  Unesi Sate
+                </ThemedText>
+              </Pressable>
+
+              <Pressable
+                style={[
+                  styles.quickActionButton,
+                  {
+                    backgroundColor: isDark
+                      ? "rgba(255, 149, 0, 0.2)"
+                      : "rgba(255, 149, 0, 0.15)",
+                  },
+                ]}
+                onPress={() => setShowRecordService(true)}
+              >
+                <ThemedText style={styles.quickActionIcon}>🔧</ThemedText>
+                <ThemedText
+                  type="defaultSemiBold"
+                  style={styles.quickActionText}
+                >
+                  Servis
+                </ThemedText>
+              </Pressable>
+
+              <Pressable
+                style={[
+                  styles.quickActionButton,
+                  {
+                    backgroundColor: isDark
+                      ? "rgba(255, 149, 0, 0.2)"
+                      : "rgba(255, 149, 0, 0.15)",
+                  },
+                ]}
+                onPress={() => setShowAddFuel(true)}
+              >
+                <ThemedText style={styles.quickActionIcon}>⛽</ThemedText>
+                <ThemedText
+                  type="defaultSemiBold"
+                  style={styles.quickActionText}
+                >
+                  Gorivo
+                </ThemedText>
+              </Pressable>
+            </View>
+          </View>
+
+          {alerts.length > 0 && (
+            <View style={styles.alertsSection}>
+              <ThemedText type="subtitle" style={styles.sectionTitle}>
+                Aktivna Upozorenja ({alerts.length})
+              </ThemedText>
+              <FlatList
+                data={alerts}
+                renderItem={renderAlertItem}
+                keyExtractor={(item) => item.id}
+                scrollEnabled={false}
+              />
+            </View>
+          )}
+
+          <View style={styles.equipmentSection}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>
+              Status Opreme
+            </ThemedText>
+            <FlatList
+              data={appState.equipment}
+              renderItem={renderEquipmentCard}
+              keyExtractor={(item) => item.id}
+              scrollEnabled={false}
+              numColumns={2}
+              columnWrapperStyle={styles.equipmentRow}
+            />
+          </View>
+        </ScrollView>
+      </ImageBackground>
+
+      <LogHoursModal isOpen={showLogHours} onClose={() => setShowLogHours(false)} />
       <RecordServiceModal
-        isOpen={recordServiceOpen}
-        onClose={() => setRecordServiceOpen(false)}
+        isOpen={showRecordService}
+        onClose={() => setShowRecordService(false)}
       />
-      <AddFuelModal
-        isOpen={addFuelOpen}
-        onClose={() => setAddFuelOpen(false)}
-      />
-    </ImageBackground>
+      <AddFuelModal isOpen={showAddFuel} onClose={() => setShowAddFuel(false)} />
+    </>
   );
 }
 
@@ -260,136 +309,105 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 12,
   },
   headerTitle: {
     fontSize: 32,
     fontWeight: "bold",
   },
-  listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 20,
-  },
   quickActionsSection: {
-    marginBottom: 24,
+    paddingHorizontal: 16,
+    marginBottom: 20,
   },
   sectionTitle: {
-    marginBottom: 12,
     fontSize: 18,
-    fontWeight: "600",
+    marginBottom: 12,
   },
-  quickActionsGrid: {
+  quickActionsRow: {
     flexDirection: "row",
     gap: 12,
-    justifyContent: "space-between",
   },
   quickActionButton: {
     flex: 1,
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 12,
-    borderRadius: 12,
-    backgroundColor: "rgba(255, 149, 0, 0.15)",
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
     borderWidth: 1,
     borderColor: "rgba(255, 149, 0, 0.3)",
   },
   quickActionIcon: {
     fontSize: 24,
+    marginBottom: 6,
   },
-  quickActionLabel: {
+  quickActionText: {
     fontSize: 12,
-    fontWeight: "600",
     color: "#FF9500",
+    textAlign: "center",
   },
   alertsSection: {
-    marginBottom: 24,
+    paddingHorizontal: 16,
+    marginBottom: 20,
   },
-  alertBox: {
+  alertItem: {
+    borderLeftWidth: 4,
+    borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 12,
-    borderRadius: 8,
-    borderLeftWidth: 4,
     marginBottom: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
   },
   alertContent: {
-    flex: 1,
     gap: 4,
   },
-  alertTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  alertMessage: {
-    fontSize: 12,
-    opacity: 0.7,
-  },
-  alertAction: {
-    marginLeft: 12,
-  },
-  alertActionText: {
-    fontSize: 12,
-    fontWeight: "600",
+  alertDescription: {
+    fontSize: 13,
+    opacity: 0.8,
   },
   equipmentSection: {
-    marginBottom: 12,
+    paddingHorizontal: 16,
+    marginBottom: 20,
+  },
+  equipmentRow: {
+    gap: 12,
   },
   equipmentCard: {
-    marginBottom: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    flex: 1,
+    borderRadius: 10,
+    padding: 12,
     borderWidth: 1,
     borderColor: "rgba(255, 149, 0, 0.2)",
   },
-  cardHeader: {
-    marginBottom: 12,
-  },
-  cardTitleSection: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
   equipmentName: {
-    fontSize: 16,
-    flex: 1,
-    color: "#1a1a1a",
-  },
-  statusBadge: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-  },
-  statusText: {
-    color: "#fff",
-    fontSize: 11,
-    fontWeight: "600",
+    fontSize: 14,
+    marginBottom: 10,
   },
   cardStats: {
     gap: 8,
   },
-  stat: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  statBox: {
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    backgroundColor: "rgba(255, 149, 0, 0.1)",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.2)",
   },
   statLabel: {
-    fontSize: 13,
+    fontSize: 11,
     opacity: 0.7,
-    color: "#1a1a1a",
+    marginBottom: 2,
   },
   statValue: {
     fontSize: 14,
-    fontWeight: "600",
     color: "#FF9500",
   },
-  statValueError: {
-    color: "#FF3B30",
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    alignSelf: "center",
+    marginTop: 4,
   },
 });

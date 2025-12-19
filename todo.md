@@ -285,3 +285,30 @@
 - [ ] Add parts used information
 - [x] Calculate total maintenance costs
 - [ ] Add service record filtering by type
+
+
+## Dark Theme Redesign
+
+### Color Palette Updates
+- [x] Update dark mode background colors (darker grays/blacks)
+- [x] Update dark mode text colors (lighter for contrast)
+- [x] Update card backgrounds for dark theme
+- [x] Update overlay colors for dark theme
+- [x] Keep orange (#FF9500) and blue accent colors
+- [x] Update status colors for dark theme visibility
+
+### Component Updates
+- [x] Update ThemedText colors for dark mode
+- [x] Update ThemedView backgrounds for dark mode
+- [x] Update button styles for dark theme
+- [x] Update modal backgrounds for dark theme
+- [x] Update search bar styling for dark theme
+- [x] Update chart colors for dark theme visibility
+
+### Screen Updates
+- [x] Update Dashboard dark theme
+- [x] Update Equipment screen dark theme
+- [x] Update Maintenance screen dark theme
+- [ ] Update Inventory screen dark theme
+- [ ] Update Reports screen dark theme
+- [x] Update all modals for dark theme
