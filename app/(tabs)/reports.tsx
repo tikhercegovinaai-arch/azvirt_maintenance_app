@@ -1,10 +1,19 @@
 import { useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  ImageBackground,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  Alert,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { useAppData } from "@/hooks/use-app-data";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useFileExport } from "@/hooks/use-file-export";
 import {
   exportMonthlyReportCSV,
@@ -13,20 +22,16 @@ import {
   exportFuelLogsCSV,
   generateFilename,
 } from "@/lib/export-csv";
-import {
-  generateMonthlyReportPDF,
-  generateServiceHistoryPDF,
-  generateInventoryPDF,
-  generatePDFFilename,
-} from "@/lib/export-pdf";
 
 type TabType = "monthly" | "daily";
 
 export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
+  const colorScheme = useColorScheme();
   const { appState } = useAppData();
-  const { exporting, exportCSV, exportText, showExportResult } = useFileExport();
+  const { exporting, exportCSV } = useFileExport();
   const [activeTab, setActiveTab] = useState<TabType>("monthly");
+  const isDark = colorScheme === "dark";
 
   // Calculate monthly summary
   const calculateMonthlySummary = () => {
@@ -81,56 +86,60 @@ export default function ReportsScreen() {
   const monthlySummary = calculateMonthlySummary();
 
   const handleExportMonthlyCSV = async () => {
-    const csvContent = exportMonthlyReportCSV(appState, monthlySummary.month);
-    const filename = generateFilename("Mjesecni_Izvjestaj", "csv");
-    const result = await exportCSV(csvContent, filename);
-    showExportResult(result);
-  };
-
-  const handleExportMonthlyPDF = async () => {
-    const pdfContent = generateMonthlyReportPDF(appState, monthlySummary.month);
-    const filename = generatePDFFilename("Mjesecni_Izvjestaj");
-    const result = await exportText(pdfContent, filename);
-    showExportResult(result);
+    try {
+      const csvContent = exportMonthlyReportCSV(appState, monthlySummary.month);
+      const filename = generateFilename("Mjesecni_Izvjestaj", "csv");
+      await exportCSV(csvContent, filename);
+      Alert.alert("Uspjeh", "Mjesečni izvještaj je izvezen");
+    } catch (error) {
+      Alert.alert("Greška", "Nije moguće izvezti izvještaj");
+    }
   };
 
   const handleExportServiceHistoryCSV = async () => {
-    const csvContent = exportServiceHistoryCSV(appState);
-    const filename = generateFilename("Istorija_Servisa", "csv");
-    const result = await exportCSV(csvContent, filename);
-    showExportResult(result);
-  };
-
-  const handleExportServiceHistoryPDF = async () => {
-    const pdfContent = generateServiceHistoryPDF(appState);
-    const filename = generatePDFFilename("Istorija_Servisa");
-    const result = await exportText(pdfContent, filename);
-    showExportResult(result);
+    try {
+      const csvContent = exportServiceHistoryCSV(appState);
+      const filename = generateFilename("Istorija_Servisa", "csv");
+      await exportCSV(csvContent, filename);
+      Alert.alert("Uspjeh", "Istorija servisa je izvezena");
+    } catch (error) {
+      Alert.alert("Greška", "Nije moguće izvezti servise");
+    }
   };
 
   const handleExportInventoryCSV = async () => {
-    const csvContent = exportInventoryCSV(appState);
-    const filename = generateFilename("Inventar", "csv");
-    const result = await exportCSV(csvContent, filename);
-    showExportResult(result);
-  };
-
-  const handleExportInventoryPDF = async () => {
-    const pdfContent = generateInventoryPDF(appState);
-    const filename = generatePDFFilename("Inventar");
-    const result = await exportText(pdfContent, filename);
-    showExportResult(result);
+    try {
+      const csvContent = exportInventoryCSV(appState);
+      const filename = generateFilename("Inventar", "csv");
+      await exportCSV(csvContent, filename);
+      Alert.alert("Uspjeh", "Inventar je izvezen");
+    } catch (error) {
+      Alert.alert("Greška", "Nije moguće izvezti inventar");
+    }
   };
 
   const handleExportFuelLogsCSV = async () => {
-    const csvContent = exportFuelLogsCSV(appState);
-    const filename = generateFilename("Istorija_Goriva", "csv");
-    const result = await exportCSV(csvContent, filename);
-    showExportResult(result);
+    try {
+      const csvContent = exportFuelLogsCSV(appState);
+      const filename = generateFilename("Istorija_Goriva", "csv");
+      await exportCSV(csvContent, filename);
+      Alert.alert("Uspjeh", "Istorija goriva je izvezena");
+    } catch (error) {
+      Alert.alert("Greška", "Nije moguće izvezti gorivo");
+    }
   };
 
   const renderEquipmentBreakdown = ({ item }: any) => (
-    <View style={styles.breakdownItem}>
+    <View
+      style={[
+        styles.breakdownItem,
+        {
+          backgroundColor: isDark
+            ? "rgba(30, 30, 30, 0.85)"
+            : "rgba(255, 255, 255, 0.85)",
+        },
+      ]}
+    >
       <View style={styles.breakdownInfo}>
         <ThemedText type="defaultSemiBold">
           {item.equipment.displayName}
@@ -148,7 +157,7 @@ export default function ReportsScreen() {
         </View>
       </View>
       <View style={styles.breakdownCost}>
-        <ThemedText type="defaultSemiBold">
+        <ThemedText type="defaultSemiBold" style={styles.costValue}>
           €{(item.fuelCost + item.serviceCost).toFixed(2)}
         </ThemedText>
         <ThemedText type="default" style={styles.breakdownCostDetail}>
@@ -168,7 +177,10 @@ export default function ReportsScreen() {
       </ThemedText>
       <View style={styles.buttonGrid}>
         <Pressable
-          style={[styles.exportButton, exporting && styles.exportButtonDisabled]}
+          style={[
+            styles.exportButton,
+            exporting && styles.exportButtonDisabled,
+          ]}
           onPress={handleExportMonthlyCSV}
           disabled={exporting}
         >
@@ -179,21 +191,10 @@ export default function ReportsScreen() {
           )}
         </Pressable>
         <Pressable
-          style={[styles.exportButton, exporting && styles.exportButtonDisabled]}
-          onPress={handleExportMonthlyPDF}
-          disabled={exporting}
-        >
-          {exporting ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <ThemedText style={styles.exportButtonText}>TXT Mjesečno</ThemedText>
-          )}
-        </Pressable>
-      </View>
-
-      <View style={styles.buttonGrid}>
-        <Pressable
-          style={[styles.exportButton, exporting && styles.exportButtonDisabled]}
+          style={[
+            styles.exportButton,
+            exporting && styles.exportButtonDisabled,
+          ]}
           onPress={handleExportServiceHistoryCSV}
           disabled={exporting}
         >
@@ -203,22 +204,14 @@ export default function ReportsScreen() {
             <ThemedText style={styles.exportButtonText}>CSV Servisi</ThemedText>
           )}
         </Pressable>
-        <Pressable
-          style={[styles.exportButton, exporting && styles.exportButtonDisabled]}
-          onPress={handleExportServiceHistoryPDF}
-          disabled={exporting}
-        >
-          {exporting ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <ThemedText style={styles.exportButtonText}>TXT Servisi</ThemedText>
-          )}
-        </Pressable>
       </View>
 
       <View style={styles.buttonGrid}>
         <Pressable
-          style={[styles.exportButton, exporting && styles.exportButtonDisabled]}
+          style={[
+            styles.exportButton,
+            exporting && styles.exportButtonDisabled,
+          ]}
           onPress={handleExportInventoryCSV}
           disabled={exporting}
         >
@@ -229,141 +222,202 @@ export default function ReportsScreen() {
           )}
         </Pressable>
         <Pressable
-          style={[styles.exportButton, exporting && styles.exportButtonDisabled]}
-          onPress={handleExportInventoryPDF}
+          style={[
+            styles.exportButton,
+            exporting && styles.exportButtonDisabled,
+          ]}
+          onPress={handleExportFuelLogsCSV}
           disabled={exporting}
         >
           {exporting ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
-            <ThemedText style={styles.exportButtonText}>TXT Inventar</ThemedText>
+            <ThemedText style={styles.exportButtonText}>CSV Gorivo</ThemedText>
           )}
         </Pressable>
       </View>
-
-      <Pressable
-        style={[styles.exportButtonFull, exporting && styles.exportButtonDisabled]}
-        onPress={handleExportFuelLogsCSV}
-        disabled={exporting}
-      >
-        {exporting ? (
-          <ActivityIndicator size="small" color="#fff" />
-        ) : (
-          <ThemedText style={styles.exportButtonText}>CSV Istorija Goriva</ThemedText>
-        )}
-      </Pressable>
     </View>
   );
 
   return (
-    <ThemedView style={styles.container}>
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
-        <ThemedText type="title">Izvještaji</ThemedText>
-      </View>
+    <ImageBackground
+      source={require("@/assets/images/background.jpg")}
+      style={styles.container}
+      imageStyle={styles.backgroundImage}
+    >
+      <View
+        style={[
+          styles.overlay,
+          {
+            backgroundColor: isDark
+              ? "rgba(0, 0, 0, 0.75)"
+              : "rgba(255, 255, 255, 0.85)",
+          },
+        ]}
+      />
 
-      <View style={styles.tabBar}>
-        <Pressable
-          style={[
-            styles.tab,
-            activeTab === "monthly" && styles.activeTab,
-          ]}
-          onPress={() => setActiveTab("monthly")}
-        >
-          <ThemedText
-            type="defaultSemiBold"
-            style={[
-              styles.tabText,
-              activeTab === "monthly" && styles.activeTabText,
-            ]}
-          >
-            Mjesečno
+      <View style={[styles.content, { paddingTop: Math.max(insets.top, 16) }]}>
+        <View style={styles.header}>
+          <ThemedText type="title" style={styles.headerTitle}>
+            Izvještaji
           </ThemedText>
-        </Pressable>
-        <Pressable
-          style={[
-            styles.tab,
-            activeTab === "daily" && styles.activeTab,
-          ]}
-          onPress={() => setActiveTab("daily")}
-        >
-          <ThemedText
-            type="defaultSemiBold"
-            style={[
-              styles.tabText,
-              activeTab === "daily" && styles.activeTabText,
-            ]}
-          >
-            Dnevno
-          </ThemedText>
-        </Pressable>
-      </View>
+        </View>
 
-      {activeTab === "monthly" ? (
-        <FlatList
-          data={[monthlySummary]}
-          renderItem={({ item }) => (
+        <View style={styles.tabBar}>
+          <Pressable
+            style={[
+              styles.tab,
+              activeTab === "monthly" && styles.activeTab,
+            ]}
+            onPress={() => setActiveTab("monthly")}
+          >
+            <ThemedText
+              type="defaultSemiBold"
+              style={[
+                styles.tabText,
+                activeTab === "monthly" && styles.activeTabText,
+              ]}
+            >
+              Mjesečno
+            </ThemedText>
+          </Pressable>
+          <Pressable
+            style={[
+              styles.tab,
+              activeTab === "daily" && styles.activeTab,
+            ]}
+            onPress={() => setActiveTab("daily")}
+          >
+            <ThemedText
+              type="defaultSemiBold"
+              style={[
+                styles.tabText,
+                activeTab === "daily" && styles.activeTabText,
+              ]}
+            >
+              Dnevno
+            </ThemedText>
+          </Pressable>
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {activeTab === "monthly" ? (
             <View style={styles.reportContainer}>
               {renderExportButtons()}
 
               <View style={styles.reportHeader}>
                 <ThemedText type="subtitle">Mjesečni Pregled</ThemedText>
                 <ThemedText type="default" style={styles.reportMonth}>
-                  {item.month}
+                  {monthlySummary.month}
                 </ThemedText>
               </View>
 
               <View style={styles.summaryGrid}>
-                <View style={styles.summaryBox}>
+                <View
+                  style={[
+                    styles.summaryBox,
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(30, 30, 30, 0.85)"
+                        : "rgba(255, 255, 255, 0.85)",
+                    },
+                  ]}
+                >
                   <ThemedText type="default" style={styles.summaryLabel}>
                     Ukupni Sati
                   </ThemedText>
                   <ThemedText type="title" style={styles.summaryValue}>
-                    {item.totalHours}h
+                    {monthlySummary.totalHours}h
                   </ThemedText>
                 </View>
 
-                <View style={styles.summaryBox}>
+                <View
+                  style={[
+                    styles.summaryBox,
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(30, 30, 30, 0.85)"
+                        : "rgba(255, 255, 255, 0.85)",
+                    },
+                  ]}
+                >
                   <ThemedText type="default" style={styles.summaryLabel}>
                     Ukupno Gorivo
                   </ThemedText>
                   <ThemedText type="title" style={styles.summaryValue}>
-                    {item.totalFuel.toFixed(1)}L
+                    {monthlySummary.totalFuel.toFixed(1)}L
                   </ThemedText>
                 </View>
 
-                <View style={styles.summaryBox}>
+                <View
+                  style={[
+                    styles.summaryBox,
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(30, 30, 30, 0.85)"
+                        : "rgba(255, 255, 255, 0.85)",
+                    },
+                  ]}
+                >
                   <ThemedText type="default" style={styles.summaryLabel}>
                     Trošak Goriva
                   </ThemedText>
                   <ThemedText type="title" style={styles.summaryValue}>
-                    €{item.totalFuelCost.toFixed(2)}
+                    €{monthlySummary.totalFuelCost.toFixed(2)}
                   </ThemedText>
                 </View>
 
-                <View style={styles.summaryBox}>
+                <View
+                  style={[
+                    styles.summaryBox,
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(30, 30, 30, 0.85)"
+                        : "rgba(255, 255, 255, 0.85)",
+                    },
+                  ]}
+                >
                   <ThemedText type="default" style={styles.summaryLabel}>
                     Trošak Servisa
                   </ThemedText>
                   <ThemedText type="title" style={styles.summaryValue}>
-                    €{item.totalServiceCost.toFixed(2)}
+                    €{monthlySummary.totalServiceCost.toFixed(2)}
                   </ThemedText>
                 </View>
 
-                <View style={styles.summaryBox}>
+                <View
+                  style={[
+                    styles.summaryBox,
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(30, 30, 30, 0.85)"
+                        : "rgba(255, 255, 255, 0.85)",
+                    },
+                  ]}
+                >
                   <ThemedText type="default" style={styles.summaryLabel}>
                     Efikasnost Goriva
                   </ThemedText>
                   <ThemedText type="title" style={styles.summaryValue}>
-                    {item.fuelEfficiency}L/h
+                    {monthlySummary.fuelEfficiency}L/h
                   </ThemedText>
                 </View>
 
-                <View style={styles.summaryBox}>
+                <View
+                  style={[
+                    styles.summaryBox,
+                    {
+                      backgroundColor: isDark
+                        ? "rgba(30, 30, 30, 0.85)"
+                        : "rgba(255, 255, 255, 0.85)",
+                    },
+                  ]}
+                >
                   <ThemedText type="default" style={styles.summaryLabel}>
                     Trošak po Satu
                   </ThemedText>
                   <ThemedText type="title" style={styles.summaryValue}>
-                    €{item.costPerHour}/h
+                    €{monthlySummary.costPerHour}/h
                   </ThemedText>
                 </View>
               </View>
@@ -373,34 +427,41 @@ export default function ReportsScreen() {
                   Pregled po Opremi
                 </ThemedText>
                 <FlatList
-                  data={item.equipmentBreakdown}
+                  data={monthlySummary.equipmentBreakdown}
                   renderItem={renderEquipmentBreakdown}
                   keyExtractor={(_, index) => index.toString()}
                   scrollEnabled={false}
                 />
               </View>
 
-              <View style={styles.totalCostBox}>
+              <View
+                style={[
+                  styles.totalCostBox,
+                  {
+                    backgroundColor: isDark
+                      ? "rgba(30, 30, 30, 0.85)"
+                      : "rgba(255, 255, 255, 0.85)",
+                  },
+                ]}
+              >
                 <ThemedText type="default" style={styles.totalCostLabel}>
                   Ukupni Trošak Mjeseca
                 </ThemedText>
                 <ThemedText type="title" style={styles.totalCostValue}>
-                  €{(item.totalFuelCost + item.totalServiceCost).toFixed(2)}
+                  €{(monthlySummary.totalFuelCost + monthlySummary.totalServiceCost).toFixed(2)}
                 </ThemedText>
               </View>
             </View>
+          ) : (
+            <View style={styles.emptyContainer}>
+              <ThemedText type="default" style={styles.emptyText}>
+                Dnevni izvještaji će biti dostupni nakon što dodate podatke
+              </ThemedText>
+            </View>
           )}
-          keyExtractor={(_, index) => index.toString()}
-          contentContainerStyle={styles.listContent}
-        />
-      ) : (
-        <View style={styles.emptyContainer}>
-          <ThemedText type="default" style={styles.emptyText}>
-            Dnevni izvještaji će biti dostupni nakon što dodate podatke
-          </ThemedText>
-        </View>
-      )}
-    </ThemedView>
+        </ScrollView>
+      </View>
+    </ImageBackground>
   );
 }
 
@@ -408,9 +469,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  backgroundImage: {
+    resizeMode: "cover",
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
+  content: {
+    flex: 1,
+    zIndex: 1,
+  },
   header: {
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 12,
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: "bold",
   },
   tabBar: {
     flexDirection: "row",
@@ -418,7 +494,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     gap: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(0, 0, 0, 0.1)",
+    borderBottomColor: "rgba(255, 149, 0, 0.2)",
   },
   tab: {
     flex: 1,
@@ -428,27 +504,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   activeTab: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#FF9500",
   },
   tabText: {
     fontSize: 14,
-    color: "#8E8E93",
+    color: "#999999",
   },
   activeTabText: {
     color: "#fff",
   },
-  listContent: {
+  reportContainer: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-  },
-  reportContainer: {
     gap: 16,
   },
   exportSection: {
     marginBottom: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(0, 0, 0, 0.1)",
+    borderBottomColor: "rgba(255, 149, 0, 0.2)",
   },
   exportTitle: {
     marginBottom: 12,
@@ -464,16 +538,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 8,
-    backgroundColor: "#007AFF",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 44,
-  },
-  exportButtonFull: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: "#007AFF",
+    backgroundColor: "#FF9500",
     alignItems: "center",
     justifyContent: "center",
     minHeight: 44,
@@ -498,13 +563,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
+    marginBottom: 16,
   },
   summaryBox: {
     width: "48%",
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderRadius: 8,
-    backgroundColor: "rgba(0, 122, 255, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.2)",
     alignItems: "center",
   },
   summaryLabel: {
@@ -514,11 +581,13 @@ const styles = StyleSheet.create({
   },
   summaryValue: {
     fontSize: 16,
+    color: "#FF9500",
   },
   breakdownSection: {
-    marginTop: 8,
+    marginBottom: 16,
   },
   breakdownTitle: {
+    fontSize: 16,
     marginBottom: 12,
   },
   breakdownItem: {
@@ -528,7 +597,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginBottom: 8,
     borderRadius: 8,
-    backgroundColor: "rgba(0, 0, 0, 0.02)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.2)",
   },
   breakdownInfo: {
     flex: 1,
@@ -544,37 +614,40 @@ const styles = StyleSheet.create({
   },
   breakdownCost: {
     alignItems: "flex-end",
-    marginLeft: 12,
+  },
+  costValue: {
+    color: "#FF9500",
   },
   breakdownCostDetail: {
     fontSize: 11,
-    marginTop: 2,
     opacity: 0.6,
+    marginTop: 2,
   },
   totalCostBox: {
     paddingVertical: 16,
     paddingHorizontal: 12,
     borderRadius: 8,
-    backgroundColor: "rgba(52, 199, 89, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.2)",
     alignItems: "center",
+    marginBottom: 16,
   },
   totalCostLabel: {
     fontSize: 12,
-    marginBottom: 4,
     opacity: 0.7,
+    marginBottom: 8,
   },
   totalCostValue: {
-    fontSize: 24,
-    color: "#34C759",
+    fontSize: 28,
+    color: "#FF9500",
   },
   emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
+    paddingVertical: 40,
     alignItems: "center",
-    padding: 32,
+    paddingHorizontal: 16,
   },
   emptyText: {
-    textAlign: "center",
     opacity: 0.7,
+    textAlign: "center",
   },
 });

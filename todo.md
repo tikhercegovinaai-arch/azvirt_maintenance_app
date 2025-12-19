@@ -309,6 +309,6 @@
 - [x] Update Dashboard dark theme
 - [x] Update Equipment screen dark theme
 - [x] Update Maintenance screen dark theme
-- [ ] Update Inventory screen dark theme
-- [ ] Update Reports screen dark theme
+- [x] Update Inventory screen dark theme
+- [x] Update Reports screen dark theme
 - [x] Update all modals for dark theme

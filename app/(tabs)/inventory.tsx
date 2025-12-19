@@ -3,7 +3,6 @@ import { FlatList, ImageBackground, Pressable, StyleSheet, View } from "react-na
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { SearchBar } from "@/components/search-bar";
 import { useAppData } from "@/hooks/use-app-data";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -42,7 +41,7 @@ export default function InventoryScreen() {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "adequate":
-        return "Dobro";
+        return "Dostupno";
       case "low":
         return "Nisko";
       case "critical":
@@ -69,7 +68,14 @@ export default function InventoryScreen() {
 
     return (
       <Pressable
-        style={styles.partItem}
+        style={[
+          styles.partItem,
+          {
+            backgroundColor: isDark
+              ? "rgba(30, 30, 30, 0.85)"
+              : "rgba(255, 255, 255, 0.85)",
+          },
+        ]}
         onPress={() => setSelectedPart(item)}
       >
         <View style={styles.partInfo}>
@@ -119,13 +125,13 @@ export default function InventoryScreen() {
             styles.overlay,
             {
               backgroundColor: isDark
-                ? "rgba(0, 0, 0, 0.6)"
+                ? "rgba(0, 0, 0, 0.75)"
                 : "rgba(255, 255, 255, 0.85)",
             },
           ]}
         />
 
-        <View style={[styles.detailContent, { paddingTop: insets.top }]}>
+        <View style={[styles.detailContent, { paddingTop: Math.max(insets.top, 16) }]}>
           <Pressable
             style={styles.closeButton}
             onPress={() => setSelectedPart(null)}
@@ -262,7 +268,7 @@ export default function InventoryScreen() {
           styles.overlay,
           {
             backgroundColor: isDark
-              ? "rgba(0, 0, 0, 0.6)"
+              ? "rgba(0, 0, 0, 0.75)"
               : "rgba(255, 255, 255, 0.85)",
           },
         ]}
@@ -275,12 +281,14 @@ export default function InventoryScreen() {
           </ThemedText>
         </View>
 
-        <SearchBar
-          placeholder="Pretraži dijelove..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          onClear={() => setSearchQuery("")}
-        />
+        <View style={styles.searchContainer}>
+          <SearchBar
+            placeholder="Pretraži dijelove..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onClear={() => setSearchQuery("")}
+          />
+        </View>
 
         <FlatList
           data={filteredParts}
@@ -289,7 +297,16 @@ export default function InventoryScreen() {
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={
             <>
-              <View style={styles.summaryCard}>
+              <View
+                style={[
+                  styles.summaryCard,
+                  {
+                    backgroundColor: isDark
+                      ? "rgba(30, 30, 30, 0.85)"
+                      : "rgba(255, 255, 255, 0.85)",
+                  },
+                ]}
+              >
                 <View style={styles.summaryItem}>
                   <ThemedText type="default" style={styles.summaryLabel}>
                     Ukupna Vrijednost
@@ -328,14 +345,24 @@ export default function InventoryScreen() {
               {(criticalParts.length > 0 || lowParts.length > 0) && (
                 <View style={styles.alertsContainer}>
                   {criticalParts.length > 0 && (
-                    <View style={[styles.alertBanner, { borderLeftColor: dangerColor }]}>
+                    <View
+                      style={[
+                        styles.alertBanner,
+                        { borderLeftColor: dangerColor },
+                      ]}
+                    >
                       <ThemedText style={styles.alertText}>
                         ⚠️ {criticalParts.length} dijelova na kritičnoj razini
                       </ThemedText>
                     </View>
                   )}
                   {lowParts.length > 0 && (
-                    <View style={[styles.alertBanner, { borderLeftColor: warningColor }]}>
+                    <View
+                      style={[
+                        styles.alertBanner,
+                        { borderLeftColor: warningColor },
+                      ]}
+                    >
                       <ThemedText style={styles.alertText}>
                         ⚠️ {lowParts.length} dijelova na niskoj razini
                       </ThemedText>
@@ -379,6 +406,10 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "bold",
   },
+  searchContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
   listContent: {
     paddingHorizontal: 16,
     paddingBottom: 16,
@@ -388,9 +419,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: "rgba(255, 149, 0, 0.15)",
     borderWidth: 1,
-    borderColor: "rgba(255, 149, 0, 0.3)",
+    borderColor: "rgba(255, 149, 0, 0.2)",
   },
   summaryItem: {
     flex: 1,
@@ -398,7 +428,7 @@ const styles = StyleSheet.create({
   },
   summaryDivider: {
     width: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.1)",
+    backgroundColor: "rgba(255, 149, 0, 0.2)",
   },
   summaryLabel: {
     fontSize: 12,
@@ -423,7 +453,6 @@ const styles = StyleSheet.create({
   alertText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#1a1a1a",
   },
   partItem: {
     flexDirection: "row",
@@ -433,7 +462,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginBottom: 8,
     borderRadius: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.85)",
     borderWidth: 1,
     borderColor: "rgba(255, 149, 0, 0.2)",
   },
@@ -498,20 +526,21 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(0, 0, 0, 0.1)",
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: "rgba(255, 149, 0, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.2)",
   },
   infoLabel: {
-    fontSize: 14,
+    fontSize: 13,
     opacity: 0.7,
   },
   valueText: {
-    color: "#34C759",
+    color: "#FF9500",
   },
   emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
     paddingVertical: 40,
+    alignItems: "center",
   },
 });
