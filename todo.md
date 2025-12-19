@@ -260,3 +260,28 @@
 - [x] Schedule notifications when spare parts reach critical stock level
 - [x] Schedule notifications when spare parts reach low stock level
 - [ ] Allow users to dismiss or snooze notifications
+
+
+## Equipment Detail Modals & Charts
+
+### Equipment Detail Modal
+- [x] Create equipment detail modal component
+- [x] Display equipment status and current hours
+- [x] Show next service date and hours until service
+- [x] Display fuel consumption summary
+- [x] Show recent service records (last 5)
+- [x] Add close button and navigation
+
+### Fuel Consumption Charts
+- [x] Create fuel consumption line chart component
+- [x] Display monthly fuel consumption trends
+- [x] Calculate fuel efficiency (hours per liter)
+- [x] Show cost per hour metrics
+- [ ] Add date range selector for chart
+
+### Service History in Modal
+- [x] Display full chronological service history
+- [x] Show service type, date, cost, and technician
+- [ ] Add parts used information
+- [x] Calculate total maintenance costs
+- [ ] Add service record filtering by type
