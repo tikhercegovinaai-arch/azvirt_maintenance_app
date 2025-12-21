@@ -14,6 +14,7 @@ import { ThemedText } from "@/components/themed-text";
 import { LogHoursModal } from "@/components/modals/log-hours-modal";
 import { RecordServiceModal } from "@/components/modals/record-service-modal";
 import { AddFuelModal } from "@/components/modals/add-fuel-modal";
+import { AddHistoricalServiceModal } from "@/components/modals/add-historical-service-modal";
 import { useAppData } from "@/hooks/use-app-data";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useThemeColor } from "@/hooks/use-theme-color";
@@ -27,6 +28,7 @@ export default function DashboardScreen() {
   const [showLogHours, setShowLogHours] = useState(false);
   const [showRecordService, setShowRecordService] = useState(false);
   const [showAddFuel, setShowAddFuel] = useState(false);
+  const [showHistoricalService, setShowHistoricalService] = useState(false);
 
   const successColor = "#34C759";
   const warningColor = "#FF9500";
@@ -249,6 +251,26 @@ export default function DashboardScreen() {
                   Gorivo
                 </ThemedText>
               </Pressable>
+
+              <Pressable
+                style={[
+                  styles.quickActionButton,
+                  {
+                    backgroundColor: isDark
+                      ? "rgba(255, 149, 0, 0.2)"
+                      : "rgba(255, 149, 0, 0.15)",
+                  },
+                ]}
+                onPress={() => setShowHistoricalService(true)}
+              >
+                <ThemedText style={styles.quickActionIcon}>📋</ThemedText>
+                <ThemedText
+                  type="defaultSemiBold"
+                  style={styles.quickActionText}
+                >
+                  Stari Servis
+                </ThemedText>
+              </Pressable>
             </View>
           </View>
 
@@ -288,6 +310,10 @@ export default function DashboardScreen() {
         onClose={() => setShowRecordService(false)}
       />
       <AddFuelModal isOpen={showAddFuel} onClose={() => setShowAddFuel(false)} />
+      <AddHistoricalServiceModal
+        visible={showHistoricalService}
+        onClose={() => setShowHistoricalService(false)}
+      />
     </>
   );
 }

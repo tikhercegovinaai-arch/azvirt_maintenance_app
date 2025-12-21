@@ -312,3 +312,30 @@
 - [x] Update Inventory screen dark theme
 - [x] Update Reports screen dark theme
 - [x] Update all modals for dark theme
+
+
+## Historical Service Tracking
+
+### Add Historical Services Modal
+- [x] Create modal component for adding past services/oil changes
+- [x] Implement date picker for service date selection
+- [x] Add service type dropdown (Oil Change, Filter, etc.)
+- [x] Add equipment selector
+- [x] Add cost input field
+- [x] Add technician name field
+- [x] Add notes field
+- [x] Implement save functionality
+- [x] Add modal to Dashboard and Equipment screens
+
+### Historical Data Import
+- [x] Allow bulk import of past services
+- [x] Display confirmation before saving
+- [x] Show success notification with count of added services
+- [x] Update equipment service history immediately
+
+### Service History Display
+- [x] Display all services (past and new) in chronological order
+- [x] Show service date prominently
+- [ ] Indicate which services are historical vs. recent
+- [ ] Allow filtering by date range
+- [x] Calculate total maintenance costs from all services
