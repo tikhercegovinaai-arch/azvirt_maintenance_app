@@ -33,6 +33,7 @@ export function AddHistoricalServiceModal({
   const [serviceDate, setServiceDate] = useState(
     new Date().toISOString().split("T")[0],
   );
+  const [hoursAtService, setHoursAtService] = useState("");
   const [cost, setCost] = useState("");
   const [technician, setTechnician] = useState("");
   const [notes, setNotes] = useState("");
@@ -49,7 +50,7 @@ export function AddHistoricalServiceModal({
   ];
 
   const handleSave = () => {
-    if (!selectedEquipment || !serviceDate || !cost || !technician) {
+    if (!selectedEquipment || !serviceDate || !cost || !technician || !hoursAtService) {
       Alert.alert("Greška", "Molimo popunite sva obavezna polja");
       return;
     }
@@ -60,11 +61,17 @@ export function AddHistoricalServiceModal({
       return;
     }
 
+    const hours = parseFloat(hoursAtService);
+    if (isNaN(hours) || hours < 0) {
+      Alert.alert("Greška", "Molimo unesite valjani broj sati");
+      return;
+    }
+
     const serviceRecord = {
       id: `service_${Date.now()}`,
       equipmentId: selectedEquipment,
       date: serviceDate,
-      hoursAtService: equipment.currentHours,
+      hoursAtService: hours,
       serviceType,
       partsUsed: [],
       cost: parseFloat(cost),
@@ -79,6 +86,7 @@ export function AddHistoricalServiceModal({
     // Reset form
     setServiceType("Oil Change");
     setServiceDate(new Date().toISOString().split("T")[0]);
+    setHoursAtService("");
     setCost("");
     setTechnician("");
     setNotes("");
@@ -228,6 +236,33 @@ export function AddHistoricalServiceModal({
               />
               <ThemedText type="default" style={styles.hint}>
                 Primjer: 2024-01-15
+              </ThemedText>
+            </View>
+
+            {/* Working Hours at Service */}
+            <View style={styles.section}>
+              <ThemedText type="defaultSemiBold" style={styles.label}>
+                Sati Opreme pri Servisu *
+              </ThemedText>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: isDark
+                      ? "rgba(255, 149, 0, 0.1)"
+                      : "rgba(255, 149, 0, 0.05)",
+                    color: isDark ? "#fff" : "#000",
+                    borderColor: "rgba(255, 149, 0, 0.2)",
+                  },
+                ]}
+                placeholder="0"
+                placeholderTextColor={isDark ? "#666" : "#999"}
+                keyboardType="decimal-pad"
+                value={hoursAtService}
+                onChangeText={setHoursAtService}
+              />
+              <ThemedText type="default" style={styles.hint}>
+                Ukupni sati opreme u vrijeme servisa
               </ThemedText>
             </View>
 

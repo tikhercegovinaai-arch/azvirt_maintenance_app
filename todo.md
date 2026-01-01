@@ -339,3 +339,13 @@
 - [ ] Indicate which services are historical vs. recent
 - [ ] Allow filtering by date range
 - [x] Calculate total maintenance costs from all services
+
+
+## Working Hours Tracking Enhancement
+
+### Add Hours Input to Historical Service Modal
+- [x] Add working hours input field to historical service modal
+- [x] Allow manual input of equipment hours at time of service
+- [x] Validate hours input (must be positive number)
+- [x] Update equipment currentHours when service is saved
+- [x] Display current hours in modal for reference
