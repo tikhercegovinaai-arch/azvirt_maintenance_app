@@ -349,3 +349,40 @@
 - [x] Validate hours input (must be positive number)
 - [x] Update equipment currentHours when service is saved
 - [x] Display current hours in modal for reference
+
+
+## Settings Screen
+
+### Settings Tab Navigation
+- [x] Create Settings screen component
+- [x] Add Settings tab to bottom navigation
+- [x] Configure icon mapping for Settings tab
+- [x] Apply dark theme styling to Settings screen
+
+### App Preferences
+- [x] Add notification sound toggle
+- [x] Add vibration feedback toggle
+- [x] Store preferences in AsyncStorage
+- [ ] Add theme toggle (Light/Dark mode)
+- [ ] Add language preference option
+
+### Notification Toggles
+- [x] Add toggle for maintenance alerts
+- [x] Add toggle for inventory alerts
+- [x] Add toggle for critical inventory alerts
+- [x] Save notification preferences
+- [x] Add master notifications toggle
+
+### Data Backup & Restore
+- [x] Create backup export function (JSON format)
+- [x] Add backup button with timestamp
+- [x] Implement restore from JSON file
+- [x] Add confirmation dialogs for restore
+- [x] Show success/error messages
+- [x] Display last backup date/time
+
+### App Information
+- [x] Display app version
+- [x] Show app name
+- [x] Display total records count (equipment, services, parts)
+- [x] Add danger zone with clear all data option
