@@ -168,10 +168,23 @@ export function useAppData() {
   const addFuelLog = useCallback(
     async (log: FuelLog) => {
       const updatedLogs = [...appState.fuelLogs, log];
-      setAppState((prev) => ({ ...prev, fuelLogs: updatedLogs }));
+      
+      // Update equipment fuel level
+      const updatedEquipment = appState.equipment.map((eq) =>
+        eq.id === log.equipmentId
+          ? { ...eq, fuelLevel: (eq.fuelLevel || 0) + log.litersAdded }
+          : eq,
+      );
+      
+      setAppState((prev) => ({ 
+        ...prev, 
+        fuelLogs: updatedLogs,
+        equipment: updatedEquipment,
+      }));
       await saveFuelLogs(updatedLogs);
+      await saveEquipment(updatedEquipment);
     },
-    [appState.fuelLogs],
+    [appState.fuelLogs, appState.equipment],
   );
 
   // Lubrication operations

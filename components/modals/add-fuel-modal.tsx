@@ -23,7 +23,7 @@ interface AddFuelModalProps {
 
 export function AddFuelModal({ isOpen, equipmentId, onClose }: AddFuelModalProps) {
   const insets = useSafeAreaInsets();
-  const { appState, addFuelLog } = useAppData();
+  const { appState, addFuelLog, removeFuelFromStock } = useAppData();
   const [selectedEquipmentId, setSelectedEquipmentId] = useState(equipmentId || "");
   const [litersAdded, setLitersAdded] = useState("");
   const [costPerLiter, setCostPerLiter] = useState("");
@@ -59,13 +59,36 @@ export function AddFuelModal({ isOpen, equipmentId, onClose }: AddFuelModalProps
       return;
     }
 
+    const litersToAdd = parseFloat(litersAdded);
+
+    // Check if site has enough fuel
+    if (appState.fuelStock && appState.fuelStock.currentLiters < litersToAdd) {
+      Alert.alert(
+        "Greška",
+        `Nedovoljno goriva na lokaciji. Dostupno: ${appState.fuelStock.currentLiters.toFixed(1)}L`,
+      );
+      return;
+    }
+
+    // Check if equipment tank has enough capacity
+    if (selectedEquipment && selectedEquipment.fuelCapacity) {
+      const newFuelLevel = (selectedEquipment.fuelLevel || 0) + litersToAdd;
+      if (newFuelLevel > selectedEquipment.fuelCapacity) {
+        Alert.alert(
+          "Greška",
+          `Kapacitet rezervoara premašen. Kapacitet: ${selectedEquipment.fuelCapacity}L, Trenutno: ${selectedEquipment.fuelLevel || 0}L`,
+        );
+        return;
+      }
+    }
+
     try {
       setLoading(true);
       const newFuelLog: any = {
         id: `fuel-${Date.now()}`,
         equipmentId: selectedEquipmentId,
         date: new Date().toISOString().split("T")[0],
-        litersAdded: parseFloat(litersAdded),
+        litersAdded: litersToAdd,
         costPerLiter: parseFloat(costPerLiter),
         totalCost: parseFloat(totalCost),
         hoursAtFueling: parseFloat(hoursAtFueling),
@@ -73,7 +96,22 @@ export function AddFuelModal({ isOpen, equipmentId, onClose }: AddFuelModalProps
       };
       await addFuelLog(newFuelLog);
 
-      Alert.alert("Uspjeh", "Gorivo je uspješno zabilježeno", [
+      // Deduct from site fuel stock
+      if (appState.fuelStock) {
+        await removeFuelFromStock(
+          litersToAdd,
+          `Dodano u ${selectedEquipment?.displayName}: ${litersToAdd}L`,
+        );
+      }
+
+      const siteFuelRemaining = appState.fuelStock
+        ? (appState.fuelStock.currentLiters - litersToAdd).toFixed(1)
+        : "N/A";
+
+      Alert.alert(
+        "Uspjeh",
+        `Gorivo uspješno dodano u ${selectedEquipment?.displayName}\n\nDodano: ${litersToAdd}L\nPreostalo na lokaciji: ${siteFuelRemaining}L`,
+        [
         {
           text: "OK",
           onPress: () => {

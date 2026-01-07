@@ -464,3 +464,13 @@
 - [ ] Add fuel stock alerts (low/critical)
 - [x] Create quick "Add Fuel" action for site stock
 - [ ] Add fuel consumption trends
+
+
+## Automatic Fuel Deduction
+
+- [x] Update AddFuelModal to deduct from site fuel stock when adding to equipment
+- [x] Validate site fuel stock has enough fuel before adding to equipment
+- [x] Show error message if site fuel stock is insufficient
+- [x] Update equipment fuel level when adding fuel
+- [x] Update site fuel stock when adding fuel to equipment
+- [x] Display confirmation message showing both updates
