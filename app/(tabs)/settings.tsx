@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   ImageBackground,
@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Switch,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -27,6 +28,7 @@ export default function SettingsScreen() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
   const [lastBackupDate, setLastBackupDate] = useState<string | null>(null);
+  const [isBackingUp, setIsBackingUp] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -53,10 +55,7 @@ export default function SettingsScreen() {
     }
   };
 
-  const saveSettings = async (
-    key: string,
-    value: boolean,
-  ) => {
+  const saveSettings = async (key: string, value: boolean) => {
     try {
       const settings = await AsyncStorage.getItem("appSettings");
       const parsed = settings ? JSON.parse(settings) : {};
@@ -94,96 +93,93 @@ export default function SettingsScreen() {
 
   const handleBackup = async () => {
     try {
+      setIsBackingUp(true);
       const backup = {
         timestamp: new Date().toISOString(),
         equipment: appState.equipment,
         serviceRecords: appState.serviceRecords,
         fuelLogs: appState.fuelLogs,
-        spareParts: appState.spareParts,
         lubricationPoints: appState.lubricationPoints,
+        spareParts: appState.spareParts,
       };
 
-      const backupJson = JSON.stringify(backup, null, 2);
-      const backupDate = new Date().toLocaleString();
-
-      await AsyncStorage.setItem("appBackup", backupJson);
+      const backupString = JSON.stringify(backup, null, 2);
+      await AsyncStorage.setItem("appBackup", backupString);
+      const backupDate = new Date().toLocaleString("hr-HR");
       await AsyncStorage.setItem("lastBackupDate", backupDate);
       setLastBackupDate(backupDate);
 
-      Alert.alert("Uspjeh", "Podaci su uspješno sigurnosno kopirani");
+      Alert.alert("Uspješno!", "Sigurnosna kopija je uspješno kreirana");
     } catch (error) {
+      Alert.alert("Greška", "Nije moguće kreirati sigurnosnu kopiju");
       console.error("Error creating backup:", error);
-      Alert.alert("Greška", "Greška pri sigurnosnom kopiranju podataka");
+    } finally {
+      setIsBackingUp(false);
     }
   };
 
   const handleRestore = async () => {
     Alert.alert(
       "Potvrda",
-      "Sigurno želite vratiti podatke iz sigurnosne kopije? Trenutni podaci će biti zamijenjeni.",
+      "Ova akcija će vratiti sve podatke iz sigurnosne kopije. Svi trenutni podaci će biti zamijenjeni.",
       [
         { text: "Otkaži", onPress: () => {} },
         {
           text: "Vrati",
           onPress: async () => {
             try {
-              const backupJson = await AsyncStorage.getItem("appBackup");
-              if (!backupJson) {
+              setIsBackingUp(true);
+              const backupString = await AsyncStorage.getItem("appBackup");
+              if (!backupString) {
                 Alert.alert("Greška", "Nema dostupne sigurnosne kopije");
                 return;
               }
 
-              const backup = JSON.parse(backupJson);
-
-              // Restore all data
-              await AsyncStorage.setItem(
-                "appState",
-                JSON.stringify({
-                  equipment: backup.equipment,
-                  serviceRecords: backup.serviceRecords,
-                  fuelLogs: backup.fuelLogs,
-                  spareParts: backup.spareParts,
-                  lubricationPoints: backup.lubricationPoints,
-                  dailyReports: backup.dailyReports || [],
-                  monthlyReports: backup.monthlyReports || [],
-                }),
-              );
-
-              Alert.alert("Uspjeh", "Podaci su uspješno vraćeni");
-              // Reload app or refresh state
+              const backup = JSON.parse(backupString);
+              await AsyncStorage.setItem("appState", JSON.stringify(backup));
+              Alert.alert("Uspješno!", "Podaci su uspješno vraćeni");
+              // Reload the app data
+              window.location.reload();
             } catch (error) {
+              Alert.alert("Greška", "Nije moguće vratiti podatke");
               console.error("Error restoring backup:", error);
-              Alert.alert("Greška", "Greška pri vraćanju podataka");
+            } finally {
+              setIsBackingUp(false);
             }
           },
+          style: "destructive",
         },
-      ],
+      ]
     );
   };
 
   const handleClearAllData = () => {
     Alert.alert(
-      "Potvrda",
-      "Sigurno želite obrisati sve podatke? Ova akcija se ne može vratiti.",
+      "Upozorenje",
+      "Ova akcija će obrisati sve podatke iz aplikacije. Ovo se ne može poništiti!",
       [
         { text: "Otkaži", onPress: () => {} },
         {
-          text: "Obriši",
+          text: "Obriši sve",
           onPress: async () => {
             try {
               await AsyncStorage.removeItem("appState");
-              Alert.alert("Uspjeh", "Svi podaci su obrisani");
-              // Reload app
+              await AsyncStorage.removeItem("appSettings");
+              await AsyncStorage.removeItem("appBackup");
+              Alert.alert("Uspješno!", "Svi podaci su obrisani");
             } catch (error) {
-              console.error("Error clearing data:", error);
-              Alert.alert("Greška", "Greška pri brisanju podataka");
+              Alert.alert("Greška", "Nije moguće obrisati podatke");
             }
           },
           style: "destructive",
         },
-      ],
+      ]
     );
   };
+
+  const equipmentCount = appState.equipment.length;
+  const serviceCount = appState.serviceRecords.length;
+  const partsCount = appState.spareParts.length;
 
   return (
     <ImageBackground
@@ -196,333 +192,234 @@ export default function SettingsScreen() {
           styles.overlay,
           {
             backgroundColor: isDark
-              ? "rgba(0, 0, 0, 0.75)"
+              ? "rgba(0, 0, 0, 0.6)"
               : "rgba(255, 255, 255, 0.85)",
           },
         ]}
       />
 
       <ScrollView
-        style={[styles.content, { paddingTop: Math.max(insets.top, 16) }]}
+        style={[
+          styles.content,
+          {
+            paddingTop: Math.max(insets.top, 16),
+            paddingBottom: Math.max(insets.bottom, 16),
+          },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <ThemedText type="title" style={styles.headerTitle}>
-            Postavke
-          </ThemedText>
+          <ThemedText type="title">Postavke</ThemedText>
         </View>
 
-        {/* Notifications Section */}
+        {/* Notification Settings Section */}
         <View style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
-            Obavijesti
-          </ThemedText>
+          <View style={styles.sectionHeader}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>
+              🔔 Obavijesti
+            </ThemedText>
+          </View>
 
-          <View
-            style={[
-              styles.settingItem,
-              {
-                backgroundColor: isDark
-                  ? "rgba(30, 30, 30, 0.85)"
-                  : "rgba(255, 255, 255, 0.85)",
-              },
-            ]}
-          >
-            <View style={styles.settingContent}>
-              <ThemedText type="defaultSemiBold">
-                Omogući obavijesti
-              </ThemedText>
+          <View style={styles.settingItem}>
+            <View style={styles.settingLabel}>
+              <ThemedText type="defaultSemiBold">Omogući obavijesti</ThemedText>
               <ThemedText type="default" style={styles.settingDescription}>
-                Primaj obavijesti o servisu i zalihama
+                Primaj obavijesti o održavanju i inventaru
               </ThemedText>
             </View>
             <Switch
               value={notificationsEnabled}
               onValueChange={handleNotificationsToggle}
               trackColor={{ false: "#767577", true: "#FF9500" }}
-              thumbColor={notificationsEnabled ? "#FF9500" : "#f4f3f4"}
+              thumbColor={notificationsEnabled ? "#fff" : "#f4f3f4"}
             />
           </View>
 
-          <View
-            style={[
-              styles.settingItem,
-              {
-                backgroundColor: isDark
-                  ? "rgba(30, 30, 30, 0.85)"
-                  : "rgba(255, 255, 255, 0.85)",
-                opacity: notificationsEnabled ? 1 : 0.5,
-              },
-            ]}
-          >
-            <View style={styles.settingContent}>
-              <ThemedText type="defaultSemiBold">
-                Upozorenja o servisu
-              </ThemedText>
-              <ThemedText type="default" style={styles.settingDescription}>
-                Obavijesti kada je servis zakašnjen
-              </ThemedText>
-            </View>
-            <Switch
-              value={maintenanceAlerts}
-              onValueChange={handleMaintenanceAlertsToggle}
-              disabled={!notificationsEnabled}
-              trackColor={{ false: "#767577", true: "#FF9500" }}
-              thumbColor={maintenanceAlerts ? "#FF9500" : "#f4f3f4"}
-            />
-          </View>
+          {notificationsEnabled && (
+            <>
+              <View style={styles.settingItem}>
+                <View style={styles.settingLabel}>
+                  <ThemedText type="default">Upozorenja o održavanju</ThemedText>
+                </View>
+                <Switch
+                  value={maintenanceAlerts}
+                  onValueChange={handleMaintenanceAlertsToggle}
+                  trackColor={{ false: "#767577", true: "#FF9500" }}
+                  thumbColor={maintenanceAlerts ? "#fff" : "#f4f3f4"}
+                />
+              </View>
 
-          <View
-            style={[
-              styles.settingItem,
-              {
-                backgroundColor: isDark
-                  ? "rgba(30, 30, 30, 0.85)"
-                  : "rgba(255, 255, 255, 0.85)",
-                opacity: notificationsEnabled ? 1 : 0.5,
-              },
-            ]}
-          >
-            <View style={styles.settingContent}>
-              <ThemedText type="defaultSemiBold">
-                Upozorenja o zalihama
-              </ThemedText>
-              <ThemedText type="default" style={styles.settingDescription}>
-                Obavijesti kada su zalihe niske
-              </ThemedText>
-            </View>
-            <Switch
-              value={inventoryAlerts}
-              onValueChange={handleInventoryAlertsToggle}
-              disabled={!notificationsEnabled}
-              trackColor={{ false: "#767577", true: "#FF9500" }}
-              thumbColor={inventoryAlerts ? "#FF9500" : "#f4f3f4"}
-            />
-          </View>
+              <View style={styles.settingItem}>
+                <View style={styles.settingLabel}>
+                  <ThemedText type="default">Upozorenja o inventaru</ThemedText>
+                </View>
+                <Switch
+                  value={inventoryAlerts}
+                  onValueChange={handleInventoryAlertsToggle}
+                  trackColor={{ false: "#767577", true: "#FF9500" }}
+                  thumbColor={inventoryAlerts ? "#fff" : "#f4f3f4"}
+                />
+              </View>
 
-          <View
-            style={[
-              styles.settingItem,
-              {
-                backgroundColor: isDark
-                  ? "rgba(30, 30, 30, 0.85)"
-                  : "rgba(255, 255, 255, 0.85)",
-                opacity: notificationsEnabled ? 1 : 0.5,
-              },
-            ]}
-          >
-            <View style={styles.settingContent}>
-              <ThemedText type="defaultSemiBold">
-                Zvuk obavijesti
-              </ThemedText>
-              <ThemedText type="default" style={styles.settingDescription}>
-                Reproduciraj zvuk za obavijesti
-              </ThemedText>
-            </View>
-            <Switch
-              value={soundEnabled}
-              onValueChange={handleSoundToggle}
-              disabled={!notificationsEnabled}
-              trackColor={{ false: "#767577", true: "#FF9500" }}
-              thumbColor={soundEnabled ? "#FF9500" : "#f4f3f4"}
-            />
-          </View>
+              <View style={styles.settingItem}>
+                <View style={styles.settingLabel}>
+                  <ThemedText type="default">Zvuk obavijesti</ThemedText>
+                </View>
+                <Switch
+                  value={soundEnabled}
+                  onValueChange={handleSoundToggle}
+                  trackColor={{ false: "#767577", true: "#FF9500" }}
+                  thumbColor={soundEnabled ? "#fff" : "#f4f3f4"}
+                />
+              </View>
 
-          <View
-            style={[
-              styles.settingItem,
-              {
-                backgroundColor: isDark
-                  ? "rgba(30, 30, 30, 0.85)"
-                  : "rgba(255, 255, 255, 0.85)",
-                opacity: notificationsEnabled ? 1 : 0.5,
-              },
-            ]}
-          >
-            <View style={styles.settingContent}>
-              <ThemedText type="defaultSemiBold">
-                Vibracija
-              </ThemedText>
-              <ThemedText type="default" style={styles.settingDescription}>
-                Vibracija pri obavijestima
-              </ThemedText>
-            </View>
-            <Switch
-              value={vibrationEnabled}
-              onValueChange={handleVibrationToggle}
-              disabled={!notificationsEnabled}
-              trackColor={{ false: "#767577", true: "#FF9500" }}
-              thumbColor={vibrationEnabled ? "#FF9500" : "#f4f3f4"}
-            />
-          </View>
+              <View style={styles.settingItem}>
+                <View style={styles.settingLabel}>
+                  <ThemedText type="default">Vibracija</ThemedText>
+                </View>
+                <Switch
+                  value={vibrationEnabled}
+                  onValueChange={handleVibrationToggle}
+                  trackColor={{ false: "#767577", true: "#FF9500" }}
+                  thumbColor={vibrationEnabled ? "#fff" : "#f4f3f4"}
+                />
+              </View>
+            </>
+          )}
         </View>
 
-        {/* Backup & Restore Section */}
+        {/* Data Management Section */}
         <View style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
-            Sigurnosna Kopija
-          </ThemedText>
+          <View style={styles.sectionHeader}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>
+              💾 Upravljanje Podacima
+            </ThemedText>
+          </View>
+
+          <Pressable
+            style={[styles.button, styles.primaryButton]}
+            onPress={handleBackup}
+            disabled={isBackingUp}
+          >
+            {isBackingUp ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <ThemedText type="defaultSemiBold" style={styles.buttonText}>
+                Kreiraj Sigurnosnu Kopiju
+              </ThemedText>
+            )}
+          </Pressable>
 
           {lastBackupDate && (
-            <View
-              style={[
-                styles.infoBox,
-                {
-                  backgroundColor: isDark
-                    ? "rgba(52, 199, 89, 0.1)"
-                    : "rgba(52, 199, 89, 0.05)",
-                },
-              ]}
-            >
-              <ThemedText type="default" style={styles.infoText}>
-                Zadnja sigurnosna kopija: {lastBackupDate}
+            <View style={styles.backupInfo}>
+              <ThemedText type="default" style={styles.backupInfoText}>
+                Zadnja kopija: {lastBackupDate}
               </ThemedText>
             </View>
           )}
 
           <Pressable
-            style={[
-              styles.button,
-              styles.backupButton,
-              {
-                backgroundColor: isDark
-                  ? "rgba(255, 149, 0, 0.2)"
-                  : "rgba(255, 149, 0, 0.15)",
-              },
-            ]}
-            onPress={handleBackup}
-          >
-            <ThemedText style={styles.backupButtonText}>
-              💾 Kreiraj Sigurnosnu Kopiju
-            </ThemedText>
-          </Pressable>
-
-          <Pressable
-            style={[
-              styles.button,
-              styles.restoreButton,
-              {
-                backgroundColor: isDark
-                  ? "rgba(0, 122, 255, 0.2)"
-                  : "rgba(0, 122, 255, 0.15)",
-              },
-            ]}
+            style={[styles.button, styles.secondaryButton]}
             onPress={handleRestore}
+            disabled={isBackingUp}
           >
-            <ThemedText style={styles.restoreButtonText}>
-              ↩️ Vrati Podatke
+            <ThemedText type="defaultSemiBold" style={styles.secondaryButtonText}>
+              Vrati iz Sigurnosne Kopije
             </ThemedText>
           </Pressable>
         </View>
 
-        {/* App Information Section */}
+        {/* Statistics Section */}
         <View style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
-            O Aplikaciji
-          </ThemedText>
-
-          <View
-            style={[
-              styles.infoItem,
-              {
-                backgroundColor: isDark
-                  ? "rgba(30, 30, 30, 0.85)"
-                  : "rgba(255, 255, 255, 0.85)",
-              },
-            ]}
-          >
-            <ThemedText type="default">Verzija</ThemedText>
-            <ThemedText type="defaultSemiBold">1.0.0</ThemedText>
+          <View style={styles.sectionHeader}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>
+              📊 Statistika
+            </ThemedText>
           </View>
 
-          <View
-            style={[
-              styles.infoItem,
-              {
-                backgroundColor: isDark
-                  ? "rgba(30, 30, 30, 0.85)"
-                  : "rgba(255, 255, 255, 0.85)",
-              },
-            ]}
-          >
-            <ThemedText type="default">Naziv Aplikacije</ThemedText>
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <ThemedText type="title" style={styles.statValue}>
+                {equipmentCount}
+              </ThemedText>
+              <ThemedText type="default" style={styles.statLabel}>
+                Opreme
+              </ThemedText>
+            </View>
+
+            <View style={styles.statCard}>
+              <ThemedText type="title" style={styles.statValue}>
+                {serviceCount}
+              </ThemedText>
+              <ThemedText type="default" style={styles.statLabel}>
+                Servisa
+              </ThemedText>
+            </View>
+
+            <View style={styles.statCard}>
+              <ThemedText type="title" style={styles.statValue}>
+                {partsCount}
+              </ThemedText>
+              <ThemedText type="default" style={styles.statLabel}>
+                Dijelova
+              </ThemedText>
+            </View>
+          </View>
+        </View>
+
+        {/* About Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>
+              ℹ️ O Aplikaciji
+            </ThemedText>
+          </View>
+
+          <View style={styles.aboutItem}>
+            <ThemedText type="default" style={styles.aboutLabel}>
+              Naziv
+            </ThemedText>
             <ThemedText type="defaultSemiBold">AZVIRT Održavanje</ThemedText>
           </View>
 
-          <View
-            style={[
-              styles.infoItem,
-              {
-                backgroundColor: isDark
-                  ? "rgba(30, 30, 30, 0.85)"
-                  : "rgba(255, 255, 255, 0.85)",
-              },
-            ]}
-          >
-            <ThemedText type="default">Ukupna Oprema</ThemedText>
-            <ThemedText type="defaultSemiBold">
-              {appState.equipment.length}
+          <View style={styles.aboutItem}>
+            <ThemedText type="default" style={styles.aboutLabel}>
+              Verzija
             </ThemedText>
+            <ThemedText type="defaultSemiBold">1.0.0</ThemedText>
           </View>
 
-          <View
-            style={[
-              styles.infoItem,
-              {
-                backgroundColor: isDark
-                  ? "rgba(30, 30, 30, 0.85)"
-                  : "rgba(255, 255, 255, 0.85)",
-              },
-            ]}
-          >
-            <ThemedText type="default">Ukupni Servisi</ThemedText>
-            <ThemedText type="defaultSemiBold">
-              {appState.serviceRecords.length}
+          <View style={styles.aboutItem}>
+            <ThemedText type="default" style={styles.aboutLabel}>
+              Opis
             </ThemedText>
-          </View>
-
-          <View
-            style={[
-              styles.infoItem,
-              {
-                backgroundColor: isDark
-                  ? "rgba(30, 30, 30, 0.85)"
-                  : "rgba(255, 255, 255, 0.85)",
-              },
-            ]}
-          >
-            <ThemedText type="default">Rezervni Dijelovi</ThemedText>
-            <ThemedText type="defaultSemiBold">
-              {appState.spareParts.length}
+            <ThemedText type="default" style={styles.aboutDescription}>
+              Aplikacija za praćenje održavanja opreme, promjene ulja i upravljanje inventarom
             </ThemedText>
           </View>
         </View>
 
         {/* Danger Zone */}
         <View style={styles.section}>
-          <ThemedText type="subtitle" style={[styles.sectionTitle, { color: "#FF3B30" }]}>
-            Opasna Zona
-          </ThemedText>
+          <View style={styles.sectionHeader}>
+            <ThemedText type="subtitle" style={[styles.sectionTitle, styles.dangerTitle]}>
+              ⚠️ Opasna Zona
+            </ThemedText>
+          </View>
 
           <Pressable
-            style={[
-              styles.button,
-              styles.dangerButton,
-              {
-                backgroundColor: isDark
-                  ? "rgba(255, 59, 48, 0.2)"
-                  : "rgba(255, 59, 48, 0.15)",
-              },
-            ]}
+            style={[styles.button, styles.dangerButton]}
             onPress={handleClearAllData}
           >
-            <ThemedText style={styles.dangerButtonText}>
-              🗑️ Obriši Sve Podatke
+            <ThemedText type="defaultSemiBold" style={styles.dangerButtonText}>
+              Obriši sve podatke
             </ThemedText>
           </Pressable>
-        </View>
 
-        <View style={{ height: 40 }} />
+          <ThemedText type="default" style={styles.dangerWarning}>
+            Ova akcija će trajno obrisati sve podatke iz aplikacije. Ovo se ne može poništiti!
+          </ThemedText>
+        </View>
       </ScrollView>
     </ImageBackground>
   );
@@ -542,39 +439,40 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     zIndex: 1,
+    paddingHorizontal: 16,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-  },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: "bold",
-  },
-  section: {
-    paddingHorizontal: 16,
     marginBottom: 24,
   },
+  section: {
+    marginBottom: 24,
+    backgroundColor: "rgba(255, 149, 0, 0.05)",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.2)",
+    overflow: "hidden",
+  },
+  sectionHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 149, 0, 0.2)",
+  },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 12,
     color: "#FF9500",
+    fontSize: 16,
   },
   settingItem: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: "rgba(255, 149, 0, 0.2)",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 149, 0, 0.1)",
   },
-  settingContent: {
+  settingLabel: {
     flex: 1,
-    marginRight: 12,
   },
   settingDescription: {
     fontSize: 12,
@@ -582,61 +480,106 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   button: {
+    marginHorizontal: 16,
+    marginVertical: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 48,
-    marginBottom: 8,
+    minHeight: 44,
+  },
+  primaryButton: {
+    backgroundColor: "#FF9500",
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 14,
+  },
+  secondaryButton: {
+    backgroundColor: "rgba(0, 102, 204, 0.1)",
+    borderWidth: 1,
+    borderColor: "#0066CC",
+  },
+  secondaryButtonText: {
+    color: "#0066CC",
+    fontSize: 14,
+  },
+  backupInfo: {
+    marginHorizontal: 16,
+    marginVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "rgba(52, 199, 89, 0.1)",
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: "#34C759",
+  },
+  backupInfoText: {
+    fontSize: 12,
+    color: "#34C759",
+  },
+  statsGrid: {
+    flexDirection: "row",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  statCard: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    backgroundColor: "rgba(255, 149, 0, 0.1)",
+    borderRadius: 8,
+    alignItems: "center",
     borderWidth: 1,
     borderColor: "rgba(255, 149, 0, 0.2)",
   },
-  backupButton: {
-    borderColor: "rgba(255, 149, 0, 0.3)",
-  },
-  backupButtonText: {
+  statValue: {
     color: "#FF9500",
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 20,
   },
-  restoreButton: {
-    borderColor: "rgba(0, 122, 255, 0.3)",
+  statLabel: {
+    fontSize: 11,
+    opacity: 0.6,
+    marginTop: 4,
   },
-  restoreButtonText: {
-    color: "#007AFF",
-    fontSize: 14,
-    fontWeight: "600",
+  aboutItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 149, 0, 0.1)",
+  },
+  aboutLabel: {
+    fontSize: 12,
+    opacity: 0.6,
+    marginBottom: 4,
+  },
+  aboutDescription: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  dangerTitle: {
+    color: "#FF3B30",
   },
   dangerButton: {
-    borderColor: "rgba(255, 59, 48, 0.3)",
+    backgroundColor: "rgba(255, 59, 48, 0.1)",
+    borderWidth: 1,
+    borderColor: "#FF3B30",
   },
   dangerButtonText: {
     color: "#FF3B30",
     fontSize: 14,
-    fontWeight: "600",
   },
-  infoBox: {
+  dangerWarning: {
+    marginHorizontal: 16,
+    marginVertical: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    backgroundColor: "rgba(255, 59, 48, 0.05)",
     borderRadius: 8,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "rgba(52, 199, 89, 0.2)",
-  },
-  infoText: {
     fontSize: 12,
-    color: "#34C759",
-  },
-  infoItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: "rgba(255, 149, 0, 0.2)",
+    opacity: 0.7,
+    lineHeight: 16,
   },
 });

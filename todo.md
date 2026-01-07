@@ -410,3 +410,29 @@
 - [x] Show hours at service for reference
 - [ ] Calculate time between services
 - [ ] Add service completion status
+
+
+## Settings Screen Optimization
+
+### UI/UX Improvements
+- [x] Reorganize settings into logical sections (Notifications, Data, About)
+- [x] Add section headers with icons
+- [x] Improve toggle switch styling and feedback
+- [x] Add visual separators between sections
+- [ ] Implement smooth animations for toggles
+- [x] Add confirmation dialogs for destructive actions
+
+### Performance & Functionality
+- [x] Optimize settings loading and state management
+- [x] Add loading indicators for backup/restore operations
+- [x] Improve error handling and user feedback
+- [ ] Add success animations for completed actions
+- [x] Implement settings persistence optimization
+- [ ] Add settings export/import functionality
+
+### Information Display
+- [x] Show last backup timestamp more prominently
+- [x] Display app version with build number
+- [x] Add total data size information
+- [x] Show storage usage breakdown
+- [x] Add quick stats (equipment count, services, parts)
