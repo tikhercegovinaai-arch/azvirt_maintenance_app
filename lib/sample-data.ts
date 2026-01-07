@@ -41,8 +41,8 @@ export const SAMPLE_EQUIPMENT: Equipment[] = [
     lastServiceHours: 0,
     lastServiceDate: "2025-11-25",
     fuelEfficiency: 8, // L/hour
-    fuelLevel: 45, // Current fuel in tank
-    fuelCapacity: 80, // Tank capacity
+    fuelLevel: 280, // Current fuel in tank
+    fuelCapacity: 540, // Tank capacity
     status: "good",
   },
 ];

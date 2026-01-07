@@ -224,44 +224,6 @@ export default function DashboardScreen() {
             </ThemedText>
           </View>
 
-          {/* Fuel Stock Card */}
-          {appState.fuelStock && (
-            <Pressable
-              style={[
-                styles.fuelStockCard,
-                {
-                  backgroundColor: isDark
-                    ? "rgba(30, 30, 30, 0.85)"
-                    : "rgba(255, 255, 255, 0.85)",
-                  borderColor:
-                    appState.fuelStock.currentLiters < appState.fuelStock.minimumLevel
-                      ? "#FF3B30"
-                      : "#FF9500",
-                },
-              ]}
-              onPress={() => setShowFuelStock(true)}
-            >
-              <View style={styles.fuelStockContent}>
-                <ThemedText type="subtitle" style={styles.fuelStockLabel}>
-                  ⛽ Zaliha Goriva na Lokaciji
-                </ThemedText>
-                <ThemedText type="title" style={styles.fuelStockValue}>
-                  {appState.fuelStock.currentLiters.toFixed(1)} L
-                </ThemedText>
-                <ThemedText type="default" style={styles.fuelStockMin}>
-                  Min: {appState.fuelStock.minimumLevel} L
-                </ThemedText>
-              </View>
-              {appState.fuelStock.currentLiters < appState.fuelStock.minimumLevel && (
-                <View style={styles.fuelStockWarning}>
-                  <ThemedText type="default" style={styles.warningText}>
-                    ⚠️
-                  </ThemedText>
-                </View>
-              )}
-            </Pressable>
-          )}
-
           <View style={styles.quickActionsSection}>
             <ThemedText type="subtitle" style={styles.sectionTitle}>
               Brze Akcije
@@ -361,6 +323,43 @@ export default function DashboardScreen() {
                 scrollEnabled={false}
               />
             </View>
+          )}
+
+          {appState.fuelStock && (
+            <Pressable
+              style={[
+                styles.fuelStockCard,
+                {
+                  backgroundColor: isDark
+                    ? "rgba(30, 30, 30, 0.85)"
+                    : "rgba(255, 255, 255, 0.85)",
+                  borderColor:
+                    appState.fuelStock.currentLiters < appState.fuelStock.minimumLevel
+                      ? "#FF3B30"
+                      : "#FF9500",
+                },
+              ]}
+              onPress={() => setShowFuelStock(true)}
+            >
+              <View style={styles.fuelStockContent}>
+                <ThemedText type="subtitle" style={styles.fuelStockLabel}>
+                  Zaliha Goriva na Lokaciji
+                </ThemedText>
+                <ThemedText type="title" style={styles.fuelStockValue}>
+                  {appState.fuelStock.currentLiters.toFixed(1)} L
+                </ThemedText>
+                <ThemedText type="default" style={styles.fuelStockMin}>
+                  Min: {appState.fuelStock.minimumLevel} L
+                </ThemedText>
+              </View>
+              {appState.fuelStock.currentLiters < appState.fuelStock.minimumLevel && (
+                <View style={styles.fuelStockWarning}>
+                  <ThemedText type="default" style={styles.warningText}>
+                    ⚠️
+                  </ThemedText>
+                </View>
+              )}
+            </Pressable>
           )}
 
           <View style={styles.equipmentSection}>
