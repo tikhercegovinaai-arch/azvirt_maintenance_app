@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { FuelChart } from "@/components/fuel-chart";
+import { ServiceCostChart } from "@/components/service-cost-chart";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Equipment, ServiceRecord, FuelLog } from "@/types";
 
@@ -64,33 +65,6 @@ export function EquipmentDetailModal({
   const hoursAtLastFuel = equipmentFuel.length > 0 ? equipmentFuel[equipmentFuel.length - 1].hoursAtFueling : 0;
   const fuelEfficiency =
     totalFuelLiters > 0 ? ((equipment.currentHours - hoursAtLastFuel) / totalFuelLiters).toFixed(2) : 0;
-
-  const renderServiceItem = ({ item }: { item: ServiceRecord }) => (
-    <View style={styles.serviceItem}>
-      <View style={styles.serviceHeader}>
-        <ThemedText type="defaultSemiBold">{item.serviceType}</ThemedText>
-        <ThemedText type="default" style={styles.serviceDate}>
-          {item.date}
-        </ThemedText>
-      </View>
-      <View style={styles.serviceDetails}>
-        <ThemedText type="default" style={styles.serviceDetail}>
-          Sati: {item.hoursAtService}
-        </ThemedText>
-        <ThemedText type="default" style={styles.serviceDetail}>
-          Tehničar: {item.technician}
-        </ThemedText>
-        <ThemedText type="defaultSemiBold" style={styles.serviceCost}>
-          €{item.cost}
-        </ThemedText>
-      </View>
-      {item.notes && (
-        <ThemedText type="default" style={styles.serviceNotes}>
-          {item.notes}
-        </ThemedText>
-      )}
-    </View>
-  );
 
   const renderOverviewTab = () => (
     <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
@@ -188,27 +162,54 @@ export function EquipmentDetailModal({
   );
 
   const renderServicesTab = () => (
-    <FlatList
-      data={equipmentServices}
-      renderItem={renderServiceItem}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={styles.tabContent}
-      ListEmptyComponent={
+    <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
+      {equipmentServices.length > 0 ? (
+        <>
+          <View style={styles.chartSection}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>
+              Analiza Trošaka Servisa
+            </ThemedText>
+            <ServiceCostChart services={equipmentServices} size={220} />
+          </View>
+
+          <View style={styles.servicesListSection}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>
+              Istorija Servisa
+            </ThemedText>
+            {equipmentServices.map((service) => (
+              <View key={service.id} style={styles.serviceItem}>
+                <View style={styles.serviceHeader}>
+                  <ThemedText type="defaultSemiBold">{service.serviceType}</ThemedText>
+                  <ThemedText type="default" style={styles.serviceDate}>
+                    {service.date}
+                  </ThemedText>
+                </View>
+                <View style={styles.serviceDetails}>
+                  <ThemedText type="default" style={styles.serviceDetail}>
+                    Sati: {service.hoursAtService}
+                  </ThemedText>
+                  <ThemedText type="default" style={styles.serviceDetail}>
+                    Tehničar: {service.technician}
+                  </ThemedText>
+                  <ThemedText type="defaultSemiBold" style={styles.serviceCost}>
+                    €{service.cost}
+                  </ThemedText>
+                </View>
+                {service.notes && (
+                  <ThemedText type="default" style={styles.serviceNotes}>
+                    {service.notes}
+                  </ThemedText>
+                )}
+              </View>
+            ))}
+          </View>
+        </>
+      ) : (
         <View style={styles.emptyContainer}>
           <ThemedText type="default">Nema servisa za ovu opremu</ThemedText>
         </View>
-      }
-      ListHeaderComponent={
-        <View style={styles.servicesHeader}>
-          <ThemedText type="subtitle">
-            Ukupno Servisa: {equipmentServices.length}
-          </ThemedText>
-          <ThemedText type="default" style={styles.servicesHeaderSubtitle}>
-            Ukupni Trošak: €{totalServiceCost.toFixed(2)}
-          </ThemedText>
-        </View>
-      }
-    />
+      )}
+    </ScrollView>
   );
 
   const renderFuelTab = () => (
@@ -350,6 +351,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 149, 0, 0.2)",
   },
   closeButton: {
     padding: 8,
@@ -362,10 +365,10 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: "row",
     paddingHorizontal: 16,
-    paddingBottom: 12,
-    gap: 8,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255, 149, 0, 0.2)",
+    gap: 8,
   },
   tab: {
     flex: 1,
@@ -373,39 +376,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 8,
     alignItems: "center",
+    backgroundColor: "rgba(255, 149, 0, 0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.1)",
   },
   activeTab: {
     backgroundColor: "#FF9500",
+    borderColor: "#FF9500",
   },
   tabText: {
-    fontSize: 13,
-    color: "#999999",
+    fontSize: 12,
+    color: "#FF9500",
   },
   activeTabText: {
     color: "#fff",
   },
   tabContent: {
-    flex: 1,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   statusSection: {
     flexDirection: "row",
-    gap: 12,
+    gap: 8,
     marginBottom: 20,
   },
   statusCard: {
     flex: 1,
     paddingVertical: 12,
     paddingHorizontal: 8,
-    borderRadius: 8,
-    backgroundColor: "rgba(255, 149, 0, 0.15)",
-    alignItems: "center",
+    backgroundColor: "rgba(255, 149, 0, 0.1)",
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "rgba(255, 149, 0, 0.3)",
+    borderColor: "rgba(255, 149, 0, 0.2)",
+    alignItems: "center",
   },
   statusLabel: {
-    fontSize: 12,
+    fontSize: 11,
     opacity: 0.7,
     marginBottom: 4,
   },
@@ -414,61 +420,65 @@ const styles = StyleSheet.create({
     color: "#FF9500",
   },
   metricsSection: {
-    gap: 12,
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 18,
-    marginBottom: 8,
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 12,
+    color: "#FF9500",
   },
   metricRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 8,
     paddingHorizontal: 12,
+    backgroundColor: "rgba(255, 149, 0, 0.05)",
     borderRadius: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.7)",
+    marginBottom: 8,
     borderWidth: 1,
-    borderColor: "rgba(255, 149, 0, 0.2)",
+    borderColor: "rgba(255, 149, 0, 0.1)",
   },
   metricLabel: {
-    fontSize: 14,
-    opacity: 0.8,
-  },
-  metricValue: {
-    fontSize: 16,
-    color: "#FF9500",
-  },
-  servicesHeader: {
-    marginBottom: 16,
-  },
-  servicesHeaderSubtitle: {
     fontSize: 13,
     opacity: 0.7,
-    marginTop: 4,
+  },
+  metricValue: {
+    fontSize: 13,
+    color: "#FF9500",
+  },
+  chartSection: {
+    marginBottom: 20,
+    paddingVertical: 12,
+    backgroundColor: "rgba(255, 149, 0, 0.05)",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.1)",
+    paddingHorizontal: 12,
+  },
+  servicesListSection: {
+    marginBottom: 20,
   },
   serviceItem: {
     paddingVertical: 12,
     paddingHorizontal: 12,
-    marginBottom: 8,
+    backgroundColor: "rgba(255, 149, 0, 0.05)",
     borderRadius: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    marginBottom: 8,
     borderWidth: 1,
-    borderColor: "rgba(255, 149, 0, 0.2)",
+    borderColor: "rgba(255, 149, 0, 0.1)",
   },
   serviceHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
     marginBottom: 8,
   },
   serviceDate: {
     fontSize: 12,
-    opacity: 0.7,
+    opacity: 0.6,
   },
   serviceDetails: {
-    flexDirection: "row",
-    gap: 12,
+    gap: 4,
     marginBottom: 8,
   },
   serviceDetail: {
@@ -476,15 +486,20 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   serviceCost: {
+    fontSize: 13,
     color: "#FF9500",
   },
   serviceNotes: {
     fontSize: 12,
-    opacity: 0.6,
     fontStyle: "italic",
+    opacity: 0.6,
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 149, 0, 0.1)",
   },
   fuelListSection: {
-    marginTop: 20,
+    marginBottom: 20,
   },
   fuelItem: {
     flexDirection: "row",
@@ -492,28 +507,40 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
     paddingHorizontal: 12,
-    marginBottom: 8,
+    backgroundColor: "rgba(255, 149, 0, 0.05)",
     borderRadius: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    marginBottom: 8,
     borderWidth: 1,
-    borderColor: "rgba(255, 149, 0, 0.2)",
+    borderColor: "rgba(255, 149, 0, 0.1)",
   },
   fuelItemLeft: {
     flex: 1,
   },
   fuelItemSubtitle: {
     fontSize: 12,
-    opacity: 0.7,
+    opacity: 0.6,
     marginTop: 4,
   },
   fuelItemCost: {
+    fontSize: 13,
     color: "#FF9500",
-    marginLeft: 12,
   },
   emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
     paddingVertical: 40,
+    alignItems: "center",
+  },
+  servicesHeader: {
+    paddingVertical: 12,
+    marginBottom: 12,
+    backgroundColor: "rgba(255, 149, 0, 0.05)",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.1)",
+  },
+  servicesHeaderSubtitle: {
+    fontSize: 12,
+    opacity: 0.6,
+    marginTop: 4,
   },
 });

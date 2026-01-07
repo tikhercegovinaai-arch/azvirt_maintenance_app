@@ -386,3 +386,27 @@
 - [x] Show app name
 - [x] Display total records count (equipment, services, parts)
 - [x] Add danger zone with clear all data option
+
+
+## Service Tab Enhancements
+
+### Cost Analysis Charts
+- [x] Create pie chart component for cost breakdown by service type
+- [x] Display total service costs
+- [x] Show average cost per service
+- [ ] Display cost trends over time
+- [ ] Add service type filtering
+
+### Service Timeline
+- [x] Create visual timeline of all services
+- [x] Show service dates and types
+- [x] Display cost for each service
+- [x] Add technician information
+- [ ] Highlight overdue services
+
+### Service Details Expansion
+- [x] Add parts used information to each service
+- [x] Display service notes in detail view
+- [x] Show hours at service for reference
+- [ ] Calculate time between services
+- [ ] Add service completion status
