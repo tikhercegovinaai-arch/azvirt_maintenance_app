@@ -107,10 +107,19 @@ export default function DashboardScreen() {
     </View>
   );
 
+  const getFuelLevelColor = (fuelLevel: number, capacity: number) => {
+    const percentage = (fuelLevel / capacity) * 100;
+    if (percentage <= 20) return dangerColor;
+    if (percentage <= 40) return warningColor;
+    return successColor;
+  };
+
   const renderEquipmentCard = ({ item }: { item: any }) => {
     const status = getEquipmentStatus(item);
     const hoursSinceLastService = item.currentHours - item.lastServiceHours;
     const hoursUntilService = item.serviceIntervalHours - hoursSinceLastService;
+    const hasFuelTracking = item.fuelLevel !== undefined && item.fuelCapacity !== undefined;
+    const fuelPercentage = hasFuelTracking ? (item.fuelLevel / item.fuelCapacity) * 100 : 0;
 
     return (
       <View
@@ -149,6 +158,33 @@ export default function DashboardScreen() {
               {hoursUntilService}h
             </ThemedText>
           </View>
+          {hasFuelTracking && (
+            <View style={styles.statBox}>
+              <ThemedText type="default" style={styles.statLabel}>
+                ⛽ Gorivo
+              </ThemedText>
+              <ThemedText
+                type="defaultSemiBold"
+                style={[
+                  styles.statValue,
+                  { color: getFuelLevelColor(item.fuelLevel, item.fuelCapacity) },
+                ]}
+              >
+                {item.fuelLevel}L
+              </ThemedText>
+              <View style={styles.fuelBar}>
+                <View
+                  style={[
+                    styles.fuelBarFill,
+                    {
+                      width: `${fuelPercentage}%`,
+                      backgroundColor: getFuelLevelColor(item.fuelLevel, item.fuelCapacity),
+                    },
+                  ]}
+                />
+              </View>
+            </View>
+          )}
           <View
             style={[
               styles.statusDot,
@@ -514,5 +550,17 @@ const styles = StyleSheet.create({
   },
   warningText: {
     fontSize: 20,
+  },
+  fuelBar: {
+    width: "100%",
+    height: 4,
+    backgroundColor: "rgba(255, 149, 0, 0.2)",
+    borderRadius: 2,
+    marginTop: 6,
+    overflow: "hidden",
+  },
+  fuelBarFill: {
+    height: "100%",
+    borderRadius: 2,
   },
 });

@@ -14,6 +14,8 @@ export interface Equipment {
   lastServiceHours: number;
   lastServiceDate: string; // ISO date
   fuelEfficiency?: number; // L/hour
+  fuelLevel?: number; // Current fuel in tank (liters)
+  fuelCapacity?: number; // Maximum fuel capacity (liters)
   status: "good" | "warning" | "overdue";
 }
 

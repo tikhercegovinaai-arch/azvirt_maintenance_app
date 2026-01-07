@@ -449,17 +449,18 @@
 - [x] Display current fuel stock on Dashboard
 
 ### Equipment Fuel Levels
-- [ ] Add fuel level field to Equipment type
+- [x] Add fuel level field to Equipment type
 - [ ] Track fuel consumption from fuel logs
 - [ ] Calculate remaining fuel in each equipment
-- [ ] Display fuel levels in equipment status cards
-- [ ] Show fuel level indicators (full/medium/low/critical)
+- [x] Display fuel levels in equipment status cards
+- [x] Show fuel level indicators (full/medium/low/critical)
 - [ ] Integrate with Dashboard alerts
+- [ ] Update AddFuelModal to deduct from site fuel stock when adding to equipment
 
 ### Dashboard Integration
 - [x] Display site fuel stock prominently
-- [ ] Show fuel levels for Loader (Utovarivač)
-- [ ] Show fuel levels for Generator
+- [x] Show fuel levels for Loader (Utovarivač)
+- [x] Show fuel levels for Generator
 - [ ] Add fuel stock alerts (low/critical)
 - [x] Create quick "Add Fuel" action for site stock
 - [ ] Add fuel consumption trends
