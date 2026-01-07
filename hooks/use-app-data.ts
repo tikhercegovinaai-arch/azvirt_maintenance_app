@@ -3,9 +3,9 @@
  */
 
 import { useEffect, useState, useCallback } from "react";
-import { AppState, Equipment, ServiceRecord, FuelLog, LubricationPoint, SparePart, Alert } from "@/types";
+import { AppState, Equipment, ServiceRecord, FuelLog, LubricationPoint, SparePart, Alert, FuelStock } from "@/types";
 import { loadAppState, saveEquipment, saveServiceRecords, saveFuelLogs, saveLubricationPoints, saveSpareParts } from "@/lib/storage";
-import { SAMPLE_EQUIPMENT, SAMPLE_SERVICE_RECORDS, SAMPLE_FUEL_LOGS, SAMPLE_LUBRICATION_POINTS, SAMPLE_SPARE_PARTS } from "@/lib/sample-data";
+import { SAMPLE_EQUIPMENT, SAMPLE_SERVICE_RECORDS, SAMPLE_FUEL_LOGS, SAMPLE_LUBRICATION_POINTS, SAMPLE_SPARE_PARTS, SAMPLE_FUEL_STOCK } from "@/lib/sample-data";
 
 export function useAppData() {
   const [appState, setAppState] = useState<AppState>({
@@ -16,6 +16,7 @@ export function useAppData() {
     spareParts: [],
     dailyReports: [],
     monthlyReports: [],
+    fuelStock: undefined,
   });
 
   const [loading, setLoading] = useState(true);
@@ -45,6 +46,7 @@ export function useAppData() {
           spareParts: SAMPLE_SPARE_PARTS,
           dailyReports: [],
           monthlyReports: [],
+          fuelStock: SAMPLE_FUEL_STOCK,
         };
 
         setAppState(initialState);
@@ -285,6 +287,41 @@ export function useAppData() {
     return appState.spareParts.reduce((total, part) => total + part.currentStock * part.price, 0);
   }, [appState.spareParts]);
 
+  // Fuel stock operations
+  const updateFuelStock = useCallback(
+    async (newLiters: number, notes?: string) => {
+      const updatedFuelStock: FuelStock = {
+        id: appState.fuelStock?.id || "fuel-stock-001",
+        currentLiters: newLiters,
+        minimumLevel: appState.fuelStock?.minimumLevel || 1000,
+        lastUpdated: new Date().toISOString(),
+        notes: notes || appState.fuelStock?.notes || "",
+      };
+
+      setAppState((prev) => ({ ...prev, fuelStock: updatedFuelStock }));
+      // Note: You may want to add saveFuelStock function to storage.ts
+    },
+    [appState.fuelStock],
+  );
+
+  const addFuelToStock = useCallback(
+    async (liters: number, notes?: string) => {
+      if (!appState.fuelStock) return;
+      const newTotal = appState.fuelStock.currentLiters + liters;
+      await updateFuelStock(newTotal, notes);
+    },
+    [appState.fuelStock, updateFuelStock],
+  );
+
+  const removeFuelFromStock = useCallback(
+    async (liters: number, notes?: string) => {
+      if (!appState.fuelStock) return;
+      const newTotal = Math.max(0, appState.fuelStock.currentLiters - liters);
+      await updateFuelStock(newTotal, notes);
+    },
+    [appState.fuelStock, updateFuelStock],
+  );
+
   return {
     appState,
     loading,
@@ -300,5 +337,8 @@ export function useAppData() {
     getEquipmentStatus,
     getPartStatus,
     getTotalInventoryValue,
+    updateFuelStock,
+    addFuelToStock,
+    removeFuelFromStock,
   };
 }

@@ -436,3 +436,30 @@
 - [x] Add total data size information
 - [x] Show storage usage breakdown
 - [x] Add quick stats (equipment count, services, parts)
+
+
+## Fuel Stock Tracking
+
+### Site Fuel Inventory
+- [x] Add FuelStock type to track site fuel inventory
+- [x] Implement fuel stock state management in useAppData
+- [x] Create fuel stock persistence in AsyncStorage
+- [x] Add sample fuel stock data
+- [x] Create modal for adding/updating site fuel stock
+- [x] Display current fuel stock on Dashboard
+
+### Equipment Fuel Levels
+- [ ] Add fuel level field to Equipment type
+- [ ] Track fuel consumption from fuel logs
+- [ ] Calculate remaining fuel in each equipment
+- [ ] Display fuel levels in equipment status cards
+- [ ] Show fuel level indicators (full/medium/low/critical)
+- [ ] Integrate with Dashboard alerts
+
+### Dashboard Integration
+- [x] Display site fuel stock prominently
+- [ ] Show fuel levels for Loader (Utovarivač)
+- [ ] Show fuel levels for Generator
+- [ ] Add fuel stock alerts (low/critical)
+- [x] Create quick "Add Fuel" action for site stock
+- [ ] Add fuel consumption trends

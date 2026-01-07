@@ -15,20 +15,21 @@ import { LogHoursModal } from "@/components/modals/log-hours-modal";
 import { RecordServiceModal } from "@/components/modals/record-service-modal";
 import { AddFuelModal } from "@/components/modals/add-fuel-modal";
 import { AddHistoricalServiceModal } from "@/components/modals/add-historical-service-modal";
+import { FuelStockModal } from "@/components/modals/fuel-stock-modal";
 import { useAppData } from "@/hooks/use-app-data";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useThemeColor } from "@/hooks/use-theme-color";
-
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
-  const { appState } = useAppData();
+  const { appState, addFuelToStock, removeFuelFromStock } = useAppData();
   const isDark = colorScheme === "dark";
 
   const [showLogHours, setShowLogHours] = useState(false);
   const [showRecordService, setShowRecordService] = useState(false);
   const [showAddFuel, setShowAddFuel] = useState(false);
   const [showHistoricalService, setShowHistoricalService] = useState(false);
+  const [showFuelStock, setShowFuelStock] = useState(false);
 
   const successColor = "#34C759";
   const warningColor = "#FF9500";
@@ -187,6 +188,44 @@ export default function DashboardScreen() {
             </ThemedText>
           </View>
 
+          {/* Fuel Stock Card */}
+          {appState.fuelStock && (
+            <Pressable
+              style={[
+                styles.fuelStockCard,
+                {
+                  backgroundColor: isDark
+                    ? "rgba(30, 30, 30, 0.85)"
+                    : "rgba(255, 255, 255, 0.85)",
+                  borderColor:
+                    appState.fuelStock.currentLiters < appState.fuelStock.minimumLevel
+                      ? "#FF3B30"
+                      : "#FF9500",
+                },
+              ]}
+              onPress={() => setShowFuelStock(true)}
+            >
+              <View style={styles.fuelStockContent}>
+                <ThemedText type="subtitle" style={styles.fuelStockLabel}>
+                  ⛽ Zaliha Goriva na Lokaciji
+                </ThemedText>
+                <ThemedText type="title" style={styles.fuelStockValue}>
+                  {appState.fuelStock.currentLiters.toFixed(1)} L
+                </ThemedText>
+                <ThemedText type="default" style={styles.fuelStockMin}>
+                  Min: {appState.fuelStock.minimumLevel} L
+                </ThemedText>
+              </View>
+              {appState.fuelStock.currentLiters < appState.fuelStock.minimumLevel && (
+                <View style={styles.fuelStockWarning}>
+                  <ThemedText type="default" style={styles.warningText}>
+                    ⚠️
+                  </ThemedText>
+                </View>
+              )}
+            </Pressable>
+          )}
+
           <View style={styles.quickActionsSection}>
             <ThemedText type="subtitle" style={styles.sectionTitle}>
               Brze Akcije
@@ -314,6 +353,13 @@ export default function DashboardScreen() {
         visible={showHistoricalService}
         onClose={() => setShowHistoricalService(false)}
       />
+      <FuelStockModal
+        isOpen={showFuelStock}
+        onClose={() => setShowFuelStock(false)}
+        fuelStock={appState.fuelStock}
+        onAddFuel={addFuelToStock}
+        onRemoveFuel={removeFuelFromStock}
+      />
     </>
   );
 }
@@ -435,5 +481,38 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignSelf: "center",
     marginTop: 4,
+  },
+  fuelStockCard: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 2,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  fuelStockContent: {
+    flex: 1,
+  },
+  fuelStockLabel: {
+    fontSize: 14,
+    marginBottom: 6,
+  },
+  fuelStockValue: {
+    fontSize: 28,
+    color: "#FF9500",
+    marginBottom: 4,
+  },
+  fuelStockMin: {
+    fontSize: 12,
+    opacity: 0.7,
+  },
+  fuelStockWarning: {
+    paddingHorizontal: 12,
+  },
+  warningText: {
+    fontSize: 20,
   },
 });

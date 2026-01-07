@@ -2,7 +2,7 @@
  * Sample data for initial app setup
  */
 
-import { Equipment, ServiceRecord, FuelLog, LubricationPoint, SparePart } from "@/types";
+import { Equipment, ServiceRecord, FuelLog, LubricationPoint, SparePart, FuelStock } from "@/types";
 
 export const SAMPLE_EQUIPMENT: Equipment[] = [
   {
@@ -286,3 +286,11 @@ export const SAMPLE_SPARE_PARTS: SparePart[] = [
     status: "adequate",
   },
 ];
+
+export const SAMPLE_FUEL_STOCK: FuelStock = {
+  id: "fuel-stock-001",
+  currentLiters: 2500,
+  minimumLevel: 1000,
+  lastUpdated: new Date().toISOString(),
+  notes: "Glavna boca goriva na lokaciji",
+};

@@ -101,6 +101,14 @@ export interface MonthlyReport {
   costPerHour: number;
 }
 
+export interface FuelStock {
+  id: string;
+  currentLiters: number;
+  minimumLevel: number;
+  lastUpdated: string; // ISO date
+  notes: string;
+}
+
 export interface AppState {
   equipment: Equipment[];
   serviceRecords: ServiceRecord[];
@@ -109,6 +117,7 @@ export interface AppState {
   spareParts: SparePart[];
   dailyReports: DailyReport[];
   monthlyReports: MonthlyReport[];
+  fuelStock?: FuelStock;
 }
 
 /**
