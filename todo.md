@@ -474,3 +474,15 @@
 - [x] Update equipment fuel level when adding fuel
 - [x] Update site fuel stock when adding fuel to equipment
 - [x] Display confirmation message showing both updates
+
+
+## Customizable PDF Reports
+
+- [x] Create PDF report configuration modal
+- [x] Add checkboxes for selecting report sections (Equipment Status, Service History, Fuel Logs, Inventory, etc.)
+- [ ] Add date range selector for filtering data
+- [x] Implement PDF generation with selected sections
+- [x] Add company header/logo to PDF reports
+- [x] Include summary statistics in PDF
+- [x] Add page numbers and timestamps to PDF
+- [x] Implement share/download functionality for generated PDFs

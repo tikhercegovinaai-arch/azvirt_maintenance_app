@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CustomReportModal } from "@/components/modals/custom-report-modal";
 import {
   ActivityIndicator,
   FlatList,
@@ -31,6 +32,7 @@ export default function ReportsScreen() {
   const { appState } = useAppData();
   const { exporting, exportCSV } = useFileExport();
   const [activeTab, setActiveTab] = useState<TabType>("monthly");
+  const [customReportModalOpen, setCustomReportModalOpen] = useState(false);
   const isDark = colorScheme === "dark";
 
   // Calculate monthly summary
@@ -175,6 +177,16 @@ export default function ReportsScreen() {
       <ThemedText type="subtitle" style={styles.exportTitle}>
         Izvezi Podatke
       </ThemedText>
+      <Pressable
+        style={[
+          styles.customReportButton,
+          exporting && styles.exportButtonDisabled,
+        ]}
+        onPress={() => setCustomReportModalOpen(true)}
+        disabled={exporting}
+      >
+        <ThemedText style={styles.customReportButtonText}>📄 Prilagođeni PDF Izvještaj</ThemedText>
+      </Pressable>
       <View style={styles.buttonGrid}>
         <Pressable
           style={[
@@ -304,6 +316,11 @@ export default function ReportsScreen() {
           {activeTab === "monthly" ? (
             <View style={styles.reportContainer}>
               {renderExportButtons()}
+
+              <CustomReportModal
+                isOpen={customReportModalOpen}
+                onClose={() => setCustomReportModalOpen(false)}
+              />
 
               <View style={styles.reportHeader}>
                 <ThemedText type="subtitle">Mjesečni Pregled</ThemedText>
@@ -532,6 +549,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
     marginBottom: 8,
+  },
+  customReportButton: {
+    backgroundColor: "#FF9500",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  customReportButtonText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "600",
   },
   exportButton: {
     flex: 1,
