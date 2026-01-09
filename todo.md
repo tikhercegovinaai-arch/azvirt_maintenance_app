@@ -486,3 +486,38 @@
 - [x] Include summary statistics in PDF
 - [x] Add page numbers and timestamps to PDF
 - [x] Implement share/download functionality for generated PDFs
+
+
+## Daily Report Form & Operational Checklists
+
+### Daily Report Screen
+- [x] Create dedicated Daily Report tab/screen
+- [x] Add date selector with default to today
+- [x] Add shift selector (morning/afternoon/night)
+- [x] Implement equipment hours input fields for all equipment
+- [x] Add notes field for general observations
+- [x] Display current equipment hours for reference
+- [x] Implement save functionality with validation
+
+### Operational Checklists
+- [x] Create checklist items (safety checks, equipment status, site conditions)
+- [x] Add checkbox UI for each checklist item
+- [x] Implement checklist completion tracking
+- [ ] Add optional notes for each checklist item
+- [x] Display completion status (completed/incomplete)
+- [x] Save checklist results with daily report
+
+### Daily Report History
+- [ ] Display list of all saved daily reports
+- [ ] Show report date, shift, and completion status
+- [ ] Add search/filter by date range
+- [ ] Implement view report details modal
+- [ ] Add edit functionality for recent reports
+- [ ] Display summary statistics (total hours logged, completion rate)
+
+### Integration
+- [ ] Update equipment hours automatically when daily report is saved
+- [ ] Add daily report summary to Dashboard
+- [ ] Create daily report export to CSV/PDF
+- [ ] Add reminder notifications for end-of-day reporting
+- [ ] Display last report date on Dashboard

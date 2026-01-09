@@ -3,7 +3,8 @@
  */
 
 import { useEffect, useState, useCallback } from "react";
-import { AppState, Equipment, ServiceRecord, FuelLog, LubricationPoint, SparePart, Alert, FuelStock } from "@/types";
+import { AppState, Equipment, ServiceRecord, FuelLog, LubricationPoint, SparePart, Alert, FuelStock, DailyReport } from "@/types";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { loadAppState, saveEquipment, saveServiceRecords, saveFuelLogs, saveLubricationPoints, saveSpareParts } from "@/lib/storage";
 import { SAMPLE_EQUIPMENT, SAMPLE_SERVICE_RECORDS, SAMPLE_FUEL_LOGS, SAMPLE_LUBRICATION_POINTS, SAMPLE_SPARE_PARTS, SAMPLE_FUEL_STOCK } from "@/lib/sample-data";
 
@@ -271,6 +272,16 @@ export function useAppData() {
     [appState.spareParts],
   );
 
+  const addDailyReport = useCallback(
+    async (report: DailyReport) => {
+      const updatedReports = [...appState.dailyReports, report];
+      setAppState((prev) => ({ ...prev, dailyReports: updatedReports }));
+      // Save to storage
+      await AsyncStorage.setItem("dailyReports", JSON.stringify(updatedReports));
+    },
+    [appState.dailyReports],
+  );
+
   const deleteSparePart = useCallback(
     async (partId: string) => {
       const updatedParts = appState.spareParts.filter((p) => p.id !== partId);
@@ -353,5 +364,6 @@ export function useAppData() {
     updateFuelStock,
     addFuelToStock,
     removeFuelFromStock,
+    addDailyReport,
   };
 }

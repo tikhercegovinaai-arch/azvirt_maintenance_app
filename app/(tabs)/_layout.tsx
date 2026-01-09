@@ -53,10 +53,17 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="daily-report"
+        options={{
+          title: "Dnevni Izvještaj",
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="clipboard.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="reports"
         options={{
           title: "Izvještaji",
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.bar.fill" color={color} />,
+          tabBarIcon: ({ color}) => <IconSymbol size={28} name="chart.bar.fill" color={color} />,
         }}
       />
       <Tabs.Screen

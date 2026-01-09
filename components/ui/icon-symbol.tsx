@@ -20,8 +20,9 @@ const MAPPING = {
   "chevron.right": "chevron-right",
   "gearshape.fill": "settings",
   "wrench.fill": "build",
-  "cube.box.fill": "inventory-2",
+  "cube.box.fill": "inventory",
   "chart.bar.fill": "bar-chart",
+  "clipboard.fill": "assignment",
 } as IconMapping;
 
 /**
