@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
+import { PhotoPicker } from "@/components/photo-picker";
 import { useAppData } from "@/hooks/use-app-data";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { DailyReport } from "@/types";
@@ -38,6 +39,7 @@ export default function DailyReportScreen() {
   const [equipmentHours, setEquipmentHours] = useState<Record<string, string>>({});
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState("");
+  const [photos, setPhotos] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -82,6 +84,7 @@ export default function DailyReportScreen() {
         checklistItems,
         operator: "User",
         generalNotes: notes,
+        photos,
       };
 
       // Save report
@@ -102,6 +105,7 @@ export default function DailyReportScreen() {
       setEquipmentHours({});
       setChecklist({});
       setNotes("");
+      setPhotos([]);
       setDate(new Date().toISOString().split("T")[0]);
       setShift("morning");
     } catch (error) {
@@ -255,6 +259,12 @@ export default function DailyReportScreen() {
                 numberOfLines={4}
                 textAlignVertical="top"
               />
+            </View>
+
+            {/* Photos Section */}
+            <View style={styles.section}>
+              <ThemedText style={styles.sectionTitle}>📷 Fotografije</ThemedText>
+              <PhotoPicker photos={photos} onPhotosChange={setPhotos} maxPhotos={5} />
             </View>
 
             {/* Save Button */}

@@ -83,6 +83,7 @@ export interface DailyReport {
   }[];
   operator: string;
   generalNotes: string;
+  photos?: string[]; // Array of base64 image strings or file URIs
 }
 
 export interface MonthlyReport {

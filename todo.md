@@ -521,3 +521,35 @@
 - [ ] Create daily report export to CSV/PDF
 - [ ] Add reminder notifications for end-of-day reporting
 - [ ] Display last report date on Dashboard
+
+
+## Camera Integration & Photo Attachments
+
+### Camera Setup
+- [x] Install expo-image-picker package
+- [x] Request camera and media library permissions
+- [x] Create photo picker component with camera and gallery options
+- [x] Implement image compression for storage optimization
+- [x] Add photo preview functionality
+
+### Daily Report Photos
+- [x] Add photo attachment field to DailyReport type
+- [x] Create photo picker UI in Daily Report screen
+- [x] Display attached photos in report
+- [x] Allow multiple photo attachments per report
+- [x] Implement photo deletion from reports
+- [x] Store photos in AsyncStorage or file system
+
+### Service Record Photos
+- [ ] Add photo attachment field to ServiceRecord type
+- [ ] Integrate photo picker in Record Service modal
+- [ ] Display photos in service history
+- [ ] Allow photo attachments for historical services
+- [ ] Show photos in equipment detail modals
+
+### Photo Management
+- [ ] Implement photo storage strategy (base64 or file paths)
+- [ ] Add photo viewer modal for full-screen viewing
+- [ ] Implement photo deletion with confirmation
+- [ ] Display photo thumbnails in lists
+- [ ] Add photo count indicators
