@@ -541,11 +541,12 @@
 - [x] Store photos in AsyncStorage or file system
 
 ### Service Record Photos
-- [ ] Add photo attachment field to ServiceRecord type
-- [ ] Integrate photo picker in Record Service modal
-- [ ] Display photos in service history
-- [ ] Allow photo attachments for historical services
-- [ ] Show photos in equipment detail modals
+- [x] Add photo attachment field to ServiceRecord type
+- [x] Integrate photo picker in Record Service modal
+- [x] Integrate photo picker in Historical Service modal
+- [x] Display photos in service history
+- [x] Show photos in equipment detail modals
+- [x] Display photo count in service record lists
 
 ### Photo Management
 - [ ] Implement photo storage strategy (base64 or file paths)

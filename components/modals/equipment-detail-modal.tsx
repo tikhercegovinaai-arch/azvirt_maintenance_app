@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   FlatList,
+  Image,
   ImageBackground,
   Modal,
   Pressable,
@@ -199,6 +200,22 @@ export function EquipmentDetailModal({
                   <ThemedText type="default" style={styles.serviceNotes}>
                     {service.notes}
                   </ThemedText>
+                )}
+                {service.photos && service.photos.length > 0 && (
+                  <View style={styles.servicePhotos}>
+                    <ThemedText type="default" style={styles.servicePhotosLabel}>
+                      📷 {service.photos.length} fotografija
+                    </ThemedText>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                      {service.photos.map((photo, index) => (
+                        <Image
+                          key={index}
+                          source={{ uri: photo }}
+                          style={styles.servicePhoto}
+                        />
+                      ))}
+                    </ScrollView>
+                  </View>
                 )}
               </View>
             ))}
@@ -497,6 +514,24 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     borderTopWidth: 1,
     borderTopColor: "rgba(255, 149, 0, 0.1)",
+  },
+  servicePhotos: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 149, 0, 0.1)",
+  },
+  servicePhotosLabel: {
+    fontSize: 12,
+    opacity: 0.7,
+    marginBottom: 8,
+  },
+  servicePhoto: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 8,
+    backgroundColor: "rgba(255, 149, 0, 0.1)",
   },
   fuelListSection: {
     marginBottom: 20,

@@ -1,8 +1,10 @@
 import { useState } from "react";
 import {
   FlatList,
+  Image,
   ImageBackground,
   Pressable,
+  ScrollView,
   StyleSheet,
   TextInput,
   View,
@@ -127,6 +129,22 @@ export default function MaintenanceScreen() {
         <ThemedText type="default" style={styles.serviceNotes}>
           {item.notes}
         </ThemedText>
+      )}
+      {item.photos && item.photos.length > 0 && (
+        <View style={styles.servicePhotos}>
+          <ThemedText type="default" style={styles.servicePhotosLabel}>
+            📷 {item.photos.length} fotografija
+          </ThemedText>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {item.photos.map((photo: string, index: number) => (
+              <Image
+                key={index}
+                source={{ uri: photo }}
+                style={styles.servicePhoto}
+              />
+            ))}
+          </ScrollView>
+        </View>
       )}
     </View>
   );
@@ -384,6 +402,24 @@ const styles = StyleSheet.create({
     fontSize: 12,
     opacity: 0.6,
     fontStyle: "italic",
+  },
+  servicePhotos: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 149, 0, 0.1)",
+  },
+  servicePhotosLabel: {
+    fontSize: 12,
+    opacity: 0.7,
+    marginBottom: 8,
+  },
+  servicePhoto: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 8,
+    backgroundColor: "rgba(255, 149, 0, 0.1)",
   },
   emptyContainer: {
     paddingVertical: 40,

@@ -29,6 +29,7 @@ export interface ServiceRecord {
   cost: number;
   technician: string;
   notes: string;
+  photos?: string[]; // Array of image URIs (base64 or file paths)
 }
 
 export interface FuelLog {

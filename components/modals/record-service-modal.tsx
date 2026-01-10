@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { PhotoPicker } from "@/components/photo-picker";
 import { useAppData } from "@/hooks/use-app-data";
 import { useThemeColor } from "@/hooks/use-theme-color";
 
@@ -41,6 +42,7 @@ export function RecordServiceModal({ isOpen, equipmentId, onClose }: RecordServi
   const [technician, setTechnician] = useState("");
   const [notes, setNotes] = useState("");
   const [selectedParts, setSelectedParts] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const backgroundColor = useThemeColor({}, "background");
   const textColor = useThemeColor({}, "text");
@@ -86,6 +88,7 @@ export function RecordServiceModal({ isOpen, equipmentId, onClose }: RecordServi
         technician,
         notes,
         partsUsed: selectedParts,
+        photos: photos.length > 0 ? photos : undefined,
       };
       await addServiceRecord(newRecord);
 
@@ -99,6 +102,7 @@ export function RecordServiceModal({ isOpen, equipmentId, onClose }: RecordServi
             setTechnician("");
             setNotes("");
             setSelectedParts([]);
+            setPhotos([]);
             setSelectedEquipmentId(equipmentId || "");
             onClose();
           },
@@ -290,6 +294,14 @@ export function RecordServiceModal({ isOpen, equipmentId, onClose }: RecordServi
                 numberOfLines={3}
                 editable={!loading}
               />
+            </View>
+
+            {/* Photo Attachments */}
+            <View style={styles.field}>
+              <ThemedText type="defaultSemiBold" style={styles.label}>
+                Fotografije
+              </ThemedText>
+              <PhotoPicker photos={photos} onPhotosChange={setPhotos} maxPhotos={5} />
             </View>
           </ScrollView>
 

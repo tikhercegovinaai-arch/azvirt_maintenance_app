@@ -10,6 +10,7 @@ import {
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
+import { PhotoPicker } from "@/components/photo-picker";
 import { useAppData } from "@/hooks/use-app-data";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
@@ -37,6 +38,7 @@ export function AddHistoricalServiceModal({
   const [cost, setCost] = useState("");
   const [technician, setTechnician] = useState("");
   const [notes, setNotes] = useState("");
+  const [photos, setPhotos] = useState<string[]>([]);
 
   const serviceTypes = [
     "Oil Change",
@@ -77,6 +79,7 @@ export function AddHistoricalServiceModal({
       cost: parseFloat(cost),
       technician,
       notes,
+      photos: photos.length > 0 ? photos : undefined,
     };
 
     addServiceRecord(serviceRecord);
@@ -90,6 +93,7 @@ export function AddHistoricalServiceModal({
     setCost("");
     setTechnician("");
     setNotes("");
+    setPhotos([]);
 
     onClose();
   };
@@ -337,6 +341,14 @@ export function AddHistoricalServiceModal({
                 value={notes}
                 onChangeText={setNotes}
               />
+            </View>
+
+            {/* Photo Attachments */}
+            <View style={styles.section}>
+              <ThemedText type="defaultSemiBold" style={styles.label}>
+                Fotografije
+              </ThemedText>
+              <PhotoPicker photos={photos} onPhotosChange={setPhotos} maxPhotos={5} />
             </View>
           </ScrollView>
 
