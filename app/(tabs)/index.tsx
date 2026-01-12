@@ -19,6 +19,7 @@ import { FuelStockModal } from "@/components/modals/fuel-stock-modal";
 import { useAppData } from "@/hooks/use-app-data";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useThemeColor } from "@/hooks/use-theme-color";
+
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
@@ -66,11 +67,11 @@ export default function DashboardScreen() {
         title:
           getEquipmentStatus(eq) === "overdue"
             ? "Servis Zakašnjen"
-            : "Niska Zalihа",
+            : "Servis Uskoro",
         description:
           getEquipmentStatus(eq) === "overdue"
             ? `${eq.displayName} trebao bi servis`
-            : `${eq.displayName} - Dostupno: ${Math.max(0, eq.serviceIntervalHours - (eq.currentHours - eq.lastServiceHours))}h`,
+            : `${eq.displayName} - Preostalo: ${Math.max(0, eq.serviceIntervalHours - (eq.currentHours - eq.lastServiceHours))}h`,
         color: getStatusColor(getEquipmentStatus(eq)),
       })),
     ...appState.spareParts
@@ -78,24 +79,30 @@ export default function DashboardScreen() {
       .map((part) => ({
         id: `part-${part.id}`,
         type: part.status === "critical" ? "danger" : "warning",
-        title: part.status === "critical" ? "Niska Zalihа" : "Azuriraj Zalihu",
-        description: `${part.name} - Dostupno: ${part.currentStock}. Minimum: ${part.minimumLevel}`,
+        title: part.status === "critical" ? "Kritična Zaliha" : "Niska Zaliha",
+        description: `${part.name} - Dostupno: ${part.currentStock}/${part.minimumLevel}`,
         color: part.status === "critical" ? dangerColor : warningColor,
       })),
   ];
+
+  // Calculate summary stats
+  const totalEquipment = appState.equipment.length;
+  const activeAlerts = alerts.length;
+  const totalServices = appState.serviceRecords.length;
+  const lowStockParts = appState.spareParts.filter((p) => p.status !== "adequate").length;
 
   const renderAlertItem = ({ item }: { item: any }) => (
     <View
       style={[
         styles.alertItem,
         {
-          borderLeftColor: item.color,
           backgroundColor: isDark
-            ? "rgba(30, 30, 30, 0.9)"
-            : "rgba(255, 255, 255, 0.9)",
+            ? "rgba(30, 30, 30, 0.95)"
+            : "rgba(255, 255, 255, 0.95)",
         },
       ]}
     >
+      <View style={[styles.alertIndicator, { backgroundColor: item.color }]} />
       <View style={styles.alertContent}>
         <ThemedText type="defaultSemiBold" style={{ color: item.color }}>
           {item.title}
@@ -107,17 +114,12 @@ export default function DashboardScreen() {
     </View>
   );
 
-  const getFuelLevelColor = (fuelLevel: number, capacity: number) => {
-    const percentage = (fuelLevel / capacity) * 100;
-    if (percentage <= 20) return dangerColor;
-    if (percentage <= 40) return warningColor;
-    return successColor;
-  };
-
   const renderEquipmentCard = ({ item }: { item: any }) => {
     const status = getEquipmentStatus(item);
+    const statusColor = getStatusColor(status);
     const hoursSinceLastService = item.currentHours - item.lastServiceHours;
     const hoursUntilService = item.serviceIntervalHours - hoursSinceLastService;
+
     const hasFuelTracking = item.fuelLevel !== undefined && item.fuelCapacity !== undefined;
     const fuelPercentage = hasFuelTracking ? (item.fuelLevel / item.fuelCapacity) * 100 : 0;
 
@@ -127,71 +129,71 @@ export default function DashboardScreen() {
           styles.equipmentCard,
           {
             backgroundColor: isDark
-              ? "rgba(30, 30, 30, 0.85)"
-              : "rgba(255, 255, 255, 0.85)",
+              ? "rgba(30, 30, 30, 0.95)"
+              : "rgba(255, 255, 255, 0.95)",
           },
         ]}
       >
-        <ThemedText type="defaultSemiBold" style={styles.equipmentName}>
-          {item.displayName}
-        </ThemedText>
-        <View style={styles.cardStats}>
-          <View style={styles.statBox}>
-            <ThemedText type="default" style={styles.statLabel}>
-              Sati
+        <View style={styles.equipmentHeader}>
+          <View style={styles.equipmentTitleRow}>
+            <ThemedText type="defaultSemiBold" style={styles.equipmentName}>
+              {item.displayName}
             </ThemedText>
+            <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+          </View>
+        </View>
+
+        <View style={styles.equipmentStats}>
+          <View style={styles.statItem}>
+            <ThemedText style={styles.statLabel}>Sati</ThemedText>
             <ThemedText type="defaultSemiBold" style={styles.statValue}>
               {item.currentHours}h
             </ThemedText>
           </View>
-          <View style={styles.statBox}>
-            <ThemedText type="default" style={styles.statLabel}>
-              Do Servisa
-            </ThemedText>
+
+          <View style={styles.statDivider} />
+
+          <View style={styles.statItem}>
+            <ThemedText style={styles.statLabel}>Do Servisa</ThemedText>
             <ThemedText
               type="defaultSemiBold"
-              style={[
-                styles.statValue,
-                { color: getStatusColor(status) },
-              ]}
+              style={[styles.statValue, { color: statusColor }]}
             >
-              {hoursUntilService}h
+              {Math.max(0, hoursUntilService)}h
             </ThemedText>
           </View>
+
           {hasFuelTracking && (
-            <View style={styles.statBox}>
-              <ThemedText type="default" style={styles.statLabel}>
-                ⛽ Gorivo
-              </ThemedText>
-              <ThemedText
-                type="defaultSemiBold"
-                style={[
-                  styles.statValue,
-                  { color: getFuelLevelColor(item.fuelLevel, item.fuelCapacity) },
-                ]}
-              >
-                {item.fuelLevel}L
-              </ThemedText>
-              <View style={styles.fuelBar}>
-                <View
-                  style={[
-                    styles.fuelBarFill,
-                    {
-                      width: `${fuelPercentage}%`,
-                      backgroundColor: getFuelLevelColor(item.fuelLevel, item.fuelCapacity),
-                    },
-                  ]}
-                />
+            <>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <ThemedText style={styles.statLabel}>⛽ Gorivo</ThemedText>
+                <ThemedText type="defaultSemiBold" style={styles.statValue}>
+                  {item.fuelLevel}L
+                </ThemedText>
               </View>
-            </View>
+            </>
           )}
-          <View
-            style={[
-              styles.statusDot,
-              { backgroundColor: getStatusColor(status) },
-            ]}
-          />
         </View>
+
+        {hasFuelTracking && (
+          <View style={styles.fuelBar}>
+            <View
+              style={[
+                styles.fuelBarFill,
+                {
+                  width: `${fuelPercentage}%`,
+                  backgroundColor:
+                    fuelPercentage > 40
+                      ? "#34C759"
+                      : fuelPercentage > 20
+                        ? "#FF9500"
+                        : "#FF3B30",
+                },
+              ]}
+            />
+          </View>
+        )}
       </View>
     );
   };
@@ -208,8 +210,8 @@ export default function DashboardScreen() {
             styles.overlay,
             {
               backgroundColor: isDark
-                ? "rgba(0, 0, 0, 0.75)"
-                : "rgba(255, 255, 255, 0.85)",
+                ? "rgba(0, 0, 0, 0.80)"
+                : "rgba(255, 255, 255, 0.88)",
             },
           ]}
         />
@@ -218,104 +220,170 @@ export default function DashboardScreen() {
           style={[styles.content, { paddingTop: Math.max(insets.top, 16) }]}
           showsVerticalScrollIndicator={false}
         >
+          {/* Header with Summary Stats */}
           <View style={styles.header}>
             <ThemedText type="title" style={styles.headerTitle}>
-              Kontrolna Tabla
+              AZVIRT Kontrola
+            </ThemedText>
+            <ThemedText style={styles.headerSubtitle}>
+              Betonska Baza - Održavanje
             </ThemedText>
           </View>
 
+          {/* Summary Cards */}
+          <View style={styles.summarySection}>
+            <View
+              style={[
+                styles.summaryCard,
+                {
+                  backgroundColor: isDark
+                    ? "rgba(255, 149, 0, 0.15)"
+                    : "rgba(255, 149, 0, 0.1)",
+                },
+              ]}
+            >
+              <ThemedText style={styles.summaryValue}>{totalEquipment}</ThemedText>
+              <ThemedText style={styles.summaryLabel}>Oprema</ThemedText>
+            </View>
+
+            <View
+              style={[
+                styles.summaryCard,
+                {
+                  backgroundColor: isDark
+                    ? activeAlerts > 0
+                      ? "rgba(255, 59, 48, 0.15)"
+                      : "rgba(52, 199, 89, 0.15)"
+                    : activeAlerts > 0
+                      ? "rgba(255, 59, 48, 0.1)"
+                      : "rgba(52, 199, 89, 0.1)",
+                },
+              ]}
+            >
+              <ThemedText
+                style={[
+                  styles.summaryValue,
+                  { color: activeAlerts > 0 ? "#FF3B30" : "#34C759" },
+                ]}
+              >
+                {activeAlerts}
+              </ThemedText>
+              <ThemedText style={styles.summaryLabel}>Upozorenja</ThemedText>
+            </View>
+
+            <View
+              style={[
+                styles.summaryCard,
+                {
+                  backgroundColor: isDark
+                    ? "rgba(0, 102, 204, 0.15)"
+                    : "rgba(0, 102, 204, 0.1)",
+                },
+              ]}
+            >
+              <ThemedText style={[styles.summaryValue, { color: "#0066CC" }]}>
+                {totalServices}
+              </ThemedText>
+              <ThemedText style={styles.summaryLabel}>Servisi</ThemedText>
+            </View>
+
+            <View
+              style={[
+                styles.summaryCard,
+                {
+                  backgroundColor: isDark
+                    ? lowStockParts > 0
+                      ? "rgba(255, 149, 0, 0.15)"
+                      : "rgba(52, 199, 89, 0.15)"
+                    : lowStockParts > 0
+                      ? "rgba(255, 149, 0, 0.1)"
+                      : "rgba(52, 199, 89, 0.1)",
+                },
+              ]}
+            >
+              <ThemedText
+                style={[
+                  styles.summaryValue,
+                  { color: lowStockParts > 0 ? "#FF9500" : "#34C759" },
+                ]}
+              >
+                {lowStockParts}
+              </ThemedText>
+              <ThemedText style={styles.summaryLabel}>Niska Zaliha</ThemedText>
+            </View>
+          </View>
+
+          {/* Quick Actions */}
           <View style={styles.quickActionsSection}>
             <ThemedText type="subtitle" style={styles.sectionTitle}>
               Brze Akcije
             </ThemedText>
-            <View style={styles.quickActionsRow}>
+            <View style={styles.quickActionsGrid}>
               <Pressable
-                style={[
-                  styles.quickActionButton,
-                  {
-                    backgroundColor: isDark
-                      ? "rgba(255, 149, 0, 0.2)"
-                      : "rgba(255, 149, 0, 0.15)",
-                  },
-                ]}
+                style={styles.quickActionButton}
                 onPress={() => setShowLogHours(true)}
               >
-                <ThemedText style={styles.quickActionIcon}>⏱</ThemedText>
-                <ThemedText
-                  type="defaultSemiBold"
-                  style={styles.quickActionText}
-                >
-                  Unesi Sate
+                <View style={[styles.quickActionIconContainer, { backgroundColor: "#FF9500" }]}>
+                  <ThemedText style={styles.quickActionIcon}>⏱</ThemedText>
+                </View>
+                <ThemedText type="defaultSemiBold" style={styles.quickActionText}>
+                  Unesi
                 </ThemedText>
+                <ThemedText style={styles.quickActionSubtext}>Sate</ThemedText>
               </Pressable>
 
               <Pressable
-                style={[
-                  styles.quickActionButton,
-                  {
-                    backgroundColor: isDark
-                      ? "rgba(255, 149, 0, 0.2)"
-                      : "rgba(255, 149, 0, 0.15)",
-                  },
-                ]}
+                style={styles.quickActionButton}
                 onPress={() => setShowRecordService(true)}
               >
-                <ThemedText style={styles.quickActionIcon}>🔧</ThemedText>
-                <ThemedText
-                  type="defaultSemiBold"
-                  style={styles.quickActionText}
-                >
+                <View style={[styles.quickActionIconContainer, { backgroundColor: "#0066CC" }]}>
+                  <ThemedText style={styles.quickActionIcon}>🔧</ThemedText>
+                </View>
+                <ThemedText type="defaultSemiBold" style={styles.quickActionText}>
                   Servis
                 </ThemedText>
+                <ThemedText style={styles.quickActionSubtext}>Zabilježi</ThemedText>
               </Pressable>
 
               <Pressable
-                style={[
-                  styles.quickActionButton,
-                  {
-                    backgroundColor: isDark
-                      ? "rgba(255, 149, 0, 0.2)"
-                      : "rgba(255, 149, 0, 0.15)",
-                  },
-                ]}
+                style={styles.quickActionButton}
                 onPress={() => setShowAddFuel(true)}
               >
-                <ThemedText style={styles.quickActionIcon}>⛽</ThemedText>
-                <ThemedText
-                  type="defaultSemiBold"
-                  style={styles.quickActionText}
-                >
+                <View style={[styles.quickActionIconContainer, { backgroundColor: "#34C759" }]}>
+                  <ThemedText style={styles.quickActionIcon}>⛽</ThemedText>
+                </View>
+                <ThemedText type="defaultSemiBold" style={styles.quickActionText}>
                   Gorivo
                 </ThemedText>
+                <ThemedText style={styles.quickActionSubtext}>Dodaj</ThemedText>
               </Pressable>
 
               <Pressable
-                style={[
-                  styles.quickActionButton,
-                  {
-                    backgroundColor: isDark
-                      ? "rgba(255, 149, 0, 0.2)"
-                      : "rgba(255, 149, 0, 0.15)",
-                  },
-                ]}
+                style={styles.quickActionButton}
                 onPress={() => setShowHistoricalService(true)}
               >
-                <ThemedText style={styles.quickActionIcon}>📋</ThemedText>
-                <ThemedText
-                  type="defaultSemiBold"
-                  style={styles.quickActionText}
-                >
-                  Stari Servis
+                <View style={[styles.quickActionIconContainer, { backgroundColor: "#8E8E93" }]}>
+                  <ThemedText style={styles.quickActionIcon}>📋</ThemedText>
+                </View>
+                <ThemedText type="defaultSemiBold" style={styles.quickActionText}>
+                  Stari
                 </ThemedText>
+                <ThemedText style={styles.quickActionSubtext}>Servis</ThemedText>
               </Pressable>
             </View>
           </View>
 
+          {/* Alerts Section */}
           {alerts.length > 0 && (
             <View style={styles.alertsSection}>
-              <ThemedText type="subtitle" style={styles.sectionTitle}>
-                Aktivna Upozorenja ({alerts.length})
-              </ThemedText>
+              <View style={styles.sectionHeader}>
+                <ThemedText type="subtitle" style={styles.sectionTitle}>
+                  Aktivna Upozorenja
+                </ThemedText>
+                <View style={styles.alertBadge}>
+                  <ThemedText style={styles.alertBadgeText}>{alerts.length}</ThemedText>
+                </View>
+              </View>
               <FlatList
                 data={alerts}
                 renderItem={renderAlertItem}
@@ -325,43 +393,60 @@ export default function DashboardScreen() {
             </View>
           )}
 
+          {/* Fuel Stock Card */}
           {appState.fuelStock && (
             <Pressable
               style={[
                 styles.fuelStockCard,
                 {
                   backgroundColor: isDark
-                    ? "rgba(30, 30, 30, 0.85)"
-                    : "rgba(255, 255, 255, 0.85)",
-                  borderColor:
-                    appState.fuelStock.currentLiters < appState.fuelStock.minimumLevel
-                      ? "#FF3B30"
-                      : "#FF9500",
+                    ? "rgba(30, 30, 30, 0.95)"
+                    : "rgba(255, 255, 255, 0.95)",
                 },
               ]}
               onPress={() => setShowFuelStock(true)}
             >
-              <View style={styles.fuelStockContent}>
-                <ThemedText type="subtitle" style={styles.fuelStockLabel}>
-                  Zaliha Goriva na Lokaciji
-                </ThemedText>
-                <ThemedText type="title" style={styles.fuelStockValue}>
-                  {appState.fuelStock.currentLiters.toFixed(1)} L
-                </ThemedText>
-                <ThemedText type="default" style={styles.fuelStockMin}>
-                  Min: {appState.fuelStock.minimumLevel} L
-                </ThemedText>
-              </View>
-              {appState.fuelStock.currentLiters < appState.fuelStock.minimumLevel && (
-                <View style={styles.fuelStockWarning}>
-                  <ThemedText type="default" style={styles.warningText}>
-                    ⚠️
+              <View style={styles.fuelStockHeader}>
+                <View>
+                  <ThemedText type="subtitle" style={styles.fuelStockLabel}>
+                    Zaliha Goriva
+                  </ThemedText>
+                  <ThemedText style={styles.fuelStockSubtitle}>
+                    Na lokaciji
                   </ThemedText>
                 </View>
-              )}
+                <View style={styles.fuelStockValueContainer}>
+                  <ThemedText type="title" style={styles.fuelStockValue}>
+                    {appState.fuelStock.currentLiters.toFixed(0)}
+                  </ThemedText>
+                  <ThemedText style={styles.fuelStockUnit}>L</ThemedText>
+                </View>
+              </View>
+
+              <View style={styles.fuelStockBar}>
+                <View
+                  style={[
+                    styles.fuelStockBarFill,
+                    {
+                      width: `${(appState.fuelStock.currentLiters / 5000) * 100}%`,
+                      backgroundColor:
+                        appState.fuelStock.currentLiters < appState.fuelStock.minimumLevel
+                          ? "#FF3B30"
+                          : appState.fuelStock.currentLiters < appState.fuelStock.minimumLevel * 2
+                            ? "#FF9500"
+                            : "#34C759",
+                    },
+                  ]}
+                />
+              </View>
+
+              <ThemedText style={styles.fuelStockMin}>
+                Minimum: {appState.fuelStock.minimumLevel}L
+              </ThemedText>
             </Pressable>
           )}
 
+          {/* Equipment Status */}
           <View style={styles.equipmentSection}>
             <ThemedText type="subtitle" style={styles.sectionTitle}>
               Status Opreme
@@ -371,19 +456,26 @@ export default function DashboardScreen() {
               renderItem={renderEquipmentCard}
               keyExtractor={(item) => item.id}
               scrollEnabled={false}
-              numColumns={2}
-              columnWrapperStyle={styles.equipmentRow}
             />
           </View>
+
+          <View style={{ height: 40 }} />
         </ScrollView>
       </ImageBackground>
 
-      <LogHoursModal isOpen={showLogHours} onClose={() => setShowLogHours(false)} />
+      {/* Modals */}
+      <LogHoursModal
+        isOpen={showLogHours}
+        onClose={() => setShowLogHours(false)}
+      />
       <RecordServiceModal
         isOpen={showRecordService}
         onClose={() => setShowRecordService(false)}
       />
-      <AddFuelModal isOpen={showAddFuel} onClose={() => setShowAddFuel(false)} />
+      <AddFuelModal
+        isOpen={showAddFuel}
+        onClose={() => setShowAddFuel(false)}
+      />
       <AddHistoricalServiceModal
         visible={showHistoricalService}
         onClose={() => setShowHistoricalService(false)}
@@ -413,153 +505,238 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     zIndex: 1,
+    paddingHorizontal: 16,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+    marginBottom: 20,
+    paddingTop: 8,
   },
   headerTitle: {
     fontSize: 32,
     fontWeight: "bold",
+    color: "#FF9500",
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    opacity: 0.7,
+    letterSpacing: 0.5,
+  },
+  summarySection: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 24,
+  },
+  summaryCard: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.2)",
+  },
+  summaryValue: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FF9500",
+    marginBottom: 4,
+  },
+  summaryLabel: {
+    fontSize: 11,
+    opacity: 0.7,
+    textAlign: "center",
   },
   quickActionsSection: {
-    paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 18,
+    fontWeight: "600",
     marginBottom: 12,
+    color: "#FF9500",
   },
-  quickActionsRow: {
+  quickActionsGrid: {
     flexDirection: "row",
     gap: 12,
   },
   quickActionButton: {
     flex: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    borderRadius: 10,
+    alignItems: "center",
+    gap: 6,
+  },
+  quickActionIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255, 149, 0, 0.3)",
+    marginBottom: 4,
   },
   quickActionIcon: {
-    fontSize: 24,
-    marginBottom: 6,
+    fontSize: 28,
   },
   quickActionText: {
-    fontSize: 12,
-    color: "#FF9500",
+    fontSize: 13,
+    textAlign: "center",
+  },
+  quickActionSubtext: {
+    fontSize: 11,
+    opacity: 0.6,
     textAlign: "center",
   },
   alertsSection: {
-    paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  alertBadge: {
+    backgroundColor: "#FF3B30",
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  alertBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
   },
   alertItem: {
-    borderLeftWidth: 4,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    flexDirection: "row",
+    borderRadius: 12,
+    padding: 14,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.2)",
+  },
+  alertIndicator: {
+    width: 4,
+    borderRadius: 2,
+    marginRight: 12,
   },
   alertContent: {
+    flex: 1,
     gap: 4,
   },
   alertDescription: {
     fontSize: 13,
-    opacity: 0.8,
+    opacity: 0.7,
+  },
+  fuelStockCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 2,
+    borderColor: "rgba(255, 149, 0, 0.3)",
+  },
+  fuelStockHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  fuelStockLabel: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#FF9500",
+  },
+  fuelStockSubtitle: {
+    fontSize: 12,
+    opacity: 0.6,
+    marginTop: 2,
+  },
+  fuelStockValueContainer: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 4,
+  },
+  fuelStockValue: {
+    fontSize: 36,
+    fontWeight: "bold",
+    color: "#FF9500",
+  },
+  fuelStockUnit: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#FF9500",
+    opacity: 0.7,
+  },
+  fuelStockBar: {
+    height: 12,
+    backgroundColor: "rgba(255, 149, 0, 0.1)",
+    borderRadius: 6,
+    overflow: "hidden",
+    marginBottom: 8,
+  },
+  fuelStockBarFill: {
+    height: "100%",
+    borderRadius: 6,
+  },
+  fuelStockMin: {
+    fontSize: 12,
+    opacity: 0.6,
   },
   equipmentSection: {
-    paddingHorizontal: 16,
-    marginBottom: 20,
-  },
-  equipmentRow: {
-    gap: 12,
+    marginBottom: 24,
   },
   equipmentCard: {
-    flex: 1,
-    borderRadius: 10,
-    padding: 12,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: "rgba(255, 149, 0, 0.2)",
+  },
+  equipmentHeader: {
+    marginBottom: 12,
+  },
+  equipmentTitleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   equipmentName: {
-    fontSize: 14,
-    marginBottom: 10,
-  },
-  cardStats: {
-    gap: 8,
-  },
-  statBox: {
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-    backgroundColor: "rgba(255, 149, 0, 0.1)",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255, 149, 0, 0.2)",
-  },
-  statLabel: {
-    fontSize: 11,
-    opacity: 0.7,
-    marginBottom: 2,
-  },
-  statValue: {
-    fontSize: 14,
-    color: "#FF9500",
+    fontSize: 15,
   },
   statusDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    alignSelf: "center",
-    marginTop: 4,
   },
-  fuelStockCard: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 2,
+  equipmentStats: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  statItem: {
+    flex: 1,
     alignItems: "center",
   },
-  fuelStockContent: {
-    flex: 1,
-  },
-  fuelStockLabel: {
-    fontSize: 14,
-    marginBottom: 6,
-  },
-  fuelStockValue: {
-    fontSize: 28,
-    color: "#FF9500",
+  statLabel: {
+    fontSize: 11,
+    opacity: 0.6,
     marginBottom: 4,
   },
-  fuelStockMin: {
-    fontSize: 12,
-    opacity: 0.7,
+  statValue: {
+    fontSize: 16,
+    fontWeight: "600",
   },
-  fuelStockWarning: {
-    paddingHorizontal: 12,
-  },
-  warningText: {
-    fontSize: 20,
+  statDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: "rgba(255, 149, 0, 0.2)",
   },
   fuelBar: {
-    width: "100%",
-    height: 4,
-    backgroundColor: "rgba(255, 149, 0, 0.2)",
-    borderRadius: 2,
-    marginTop: 6,
+    height: 6,
+    backgroundColor: "rgba(255, 149, 0, 0.1)",
+    borderRadius: 3,
     overflow: "hidden",
   },
   fuelBarFill: {
     height: "100%",
-    borderRadius: 2,
+    borderRadius: 3,
   },
 });
