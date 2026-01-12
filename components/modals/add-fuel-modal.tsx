@@ -158,6 +158,49 @@ export function AddFuelModal({ isOpen, equipmentId, onClose }: AddFuelModalProps
           </View>
 
           <View style={styles.content}>
+            {/* Fuel Storage Status */}
+            <View style={styles.fuelStatusCard}>
+              <ThemedText type="defaultSemiBold" style={styles.fuelStatusTitle}>
+                Zaliha Goriva na Lokaciji
+              </ThemedText>
+              <View style={styles.fuelStatusContent}>
+                <View style={styles.fuelStatusItem}>
+                  <ThemedText style={styles.fuelStatusLabel}>Trenutno:</ThemedText>
+                  <ThemedText type="defaultSemiBold" style={styles.fuelStatusValue}>
+                    {appState.fuelStock?.currentLiters || 0}L
+                  </ThemedText>
+                </View>
+                <View style={styles.fuelStatusItem}>
+                  <ThemedText style={styles.fuelStatusLabel}>Kapacitet:</ThemedText>
+                  <ThemedText type="defaultSemiBold" style={styles.fuelStatusValue}>
+                    {appState.fuelStock?.capacity || 0}L
+                  </ThemedText>
+                </View>
+                <View style={styles.fuelStatusItem}>
+                  <ThemedText style={styles.fuelStatusLabel}>Minimum:</ThemedText>
+                  <ThemedText type="defaultSemiBold" style={styles.fuelStatusValue}>
+                    {appState.fuelStock?.minimumLevel || 0}L
+                  </ThemedText>
+                </View>
+              </View>
+              <View style={styles.fuelBarContainer}>
+                <View
+                  style={[
+                    styles.fuelBar,
+                    {
+                      width: `${((appState.fuelStock?.currentLiters || 0) / (appState.fuelStock?.capacity || 1)) * 100}%`,
+                      backgroundColor:
+                        (appState.fuelStock?.currentLiters || 0) > (appState.fuelStock?.capacity || 1) * 0.5
+                          ? "#34C759"
+                          : (appState.fuelStock?.currentLiters || 0) > (appState.fuelStock?.minimumLevel || 0)
+                            ? "#FF9500"
+                            : "#FF3B30",
+                    },
+                  ]}
+                />
+              </View>
+            </View>
+
             {/* Equipment Selector */}
             <View style={styles.field}>
               <ThemedText type="defaultSemiBold" style={styles.label}>
@@ -355,6 +398,47 @@ const styles = StyleSheet.create({
   },
   selectorButtonTextActive: {
     color: "#fff",
+  },
+  fuelStatusCard: {
+    backgroundColor: "rgba(255, 149, 0, 0.1)",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 149, 0, 0.3)",
+  },
+  fuelStatusTitle: {
+    fontSize: 14,
+    color: "#FF9500",
+    marginBottom: 8,
+  },
+  fuelStatusContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  fuelStatusItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+  fuelStatusLabel: {
+    fontSize: 12,
+    opacity: 0.7,
+    marginBottom: 4,
+  },
+  fuelStatusValue: {
+    fontSize: 16,
+    color: "#FF9500",
+  },
+  fuelBarContainer: {
+    height: 8,
+    backgroundColor: "rgba(0, 0, 0, 0.1)",
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  fuelBar: {
+    height: "100%",
+    borderRadius: 4,
   },
   totalBox: {
     paddingVertical: 12,

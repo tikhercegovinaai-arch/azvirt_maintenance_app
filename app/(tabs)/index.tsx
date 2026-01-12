@@ -334,6 +334,16 @@ export default function DashboardScreen() {
               </ThemedText>
               <ThemedText style={styles.summaryLabel}>Niska Zaliha</ThemedText>
             </View>
+
+            <Pressable
+              onPress={() => setShowFuelStock(true)}
+              style={({ pressed }) => [styles.summaryCard, { opacity: pressed ? 0.7 : 1 }]}
+            >
+              <ThemedText style={[styles.summaryValue, { color: "#FF9500" }]}>
+                {appState.fuelStock?.currentLiters || 0}L
+              </ThemedText>
+              <ThemedText style={styles.summaryLabel}>Gorivo</ThemedText>
+            </Pressable>
           </View>
 
           {/* Quick Actions */}

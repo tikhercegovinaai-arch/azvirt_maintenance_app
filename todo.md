@@ -595,3 +595,18 @@
 - [ ] Add haptic feedback on button press
 - [x] Improve icon visibility and sizing
 - [x] Add button state indicators
+
+
+## Fuel Storage Enhancement
+
+### Add Fuel Modal Improvements
+- [x] Display current fuel storage level in Add Fuel modal
+- [x] Show fuel storage capacity and percentage
+- [x] Display minimum level threshold
+- [x] Add visual fuel gauge in modal
+
+### Dashboard Fuel Widget
+- [x] Add fuel status widget to Dashboard summary cards
+- [x] Show current fuel level and capacity
+- [x] Add visual indicator for low fuel
+- [x] Make fuel widget tappable to open Fuel Stock modal

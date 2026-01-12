@@ -294,6 +294,7 @@ export const SAMPLE_SPARE_PARTS: SparePart[] = [
 export const SAMPLE_FUEL_STOCK: FuelStock = {
   id: "fuel-stock-001",
   currentLiters: 2500,
+  capacity: 5000,
   minimumLevel: 1000,
   lastUpdated: new Date().toISOString(),
   notes: "Glavna boca goriva na lokaciji",

@@ -317,6 +317,7 @@ export function useAppData() {
       const updatedFuelStock: FuelStock = {
         id: appState.fuelStock?.id || "fuel-stock-001",
         currentLiters: newLiters,
+        capacity: appState.fuelStock?.capacity || 5000,
         minimumLevel: appState.fuelStock?.minimumLevel || 1000,
         lastUpdated: new Date().toISOString(),
         notes: notes || appState.fuelStock?.notes || "",

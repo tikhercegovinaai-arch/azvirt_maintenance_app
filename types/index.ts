@@ -108,6 +108,7 @@ export interface MonthlyReport {
 export interface FuelStock {
   id: string;
   currentLiters: number;
+  capacity: number; // Maximum capacity
   minimumLevel: number;
   lastUpdated: string; // ISO date
   notes: string;
