@@ -343,10 +343,13 @@ export default function DashboardScreen() {
             </ThemedText>
             <View style={styles.quickActionsGrid}>
               <Pressable
-                style={styles.quickActionButton}
+                style={({ pressed }) => [
+                  styles.quickActionButton,
+                  { transform: [{ scale: pressed ? 0.95 : 1 }], opacity: pressed ? 0.8 : 1 }
+                ]}
                 onPress={() => setShowLogHours(true)}
               >
-                <View style={[styles.quickActionIconContainer, { backgroundColor: "#FF9500" }]}>
+                <View style={[styles.quickActionIconContainer, styles.quickActionIconOrange]}>
                   <ThemedText style={styles.quickActionIcon}>⏱</ThemedText>
                 </View>
                 <ThemedText type="defaultSemiBold" style={styles.quickActionText}>
@@ -356,10 +359,13 @@ export default function DashboardScreen() {
               </Pressable>
 
               <Pressable
-                style={styles.quickActionButton}
+                style={({ pressed }) => [
+                  styles.quickActionButton,
+                  { transform: [{ scale: pressed ? 0.95 : 1 }], opacity: pressed ? 0.8 : 1 }
+                ]}
                 onPress={() => setShowRecordService(true)}
               >
-                <View style={[styles.quickActionIconContainer, { backgroundColor: "#0066CC" }]}>
+                <View style={[styles.quickActionIconContainer, styles.quickActionIconBlue]}>
                   <ThemedText style={styles.quickActionIcon}>🔧</ThemedText>
                 </View>
                 <ThemedText type="defaultSemiBold" style={styles.quickActionText}>
@@ -369,10 +375,13 @@ export default function DashboardScreen() {
               </Pressable>
 
               <Pressable
-                style={styles.quickActionButton}
+                style={({ pressed }) => [
+                  styles.quickActionButton,
+                  { transform: [{ scale: pressed ? 0.95 : 1 }], opacity: pressed ? 0.8 : 1 }
+                ]}
                 onPress={() => setShowAddFuel(true)}
               >
-                <View style={[styles.quickActionIconContainer, { backgroundColor: "#34C759" }]}>
+                <View style={[styles.quickActionIconContainer, styles.quickActionIconGreen]}>
                   <ThemedText style={styles.quickActionIcon}>⛽</ThemedText>
                 </View>
                 <ThemedText type="defaultSemiBold" style={styles.quickActionText}>
@@ -382,10 +391,13 @@ export default function DashboardScreen() {
               </Pressable>
 
               <Pressable
-                style={styles.quickActionButton}
+                style={({ pressed }) => [
+                  styles.quickActionButton,
+                  { transform: [{ scale: pressed ? 0.95 : 1 }], opacity: pressed ? 0.8 : 1 }
+                ]}
                 onPress={() => setShowHistoricalService(true)}
               >
-                <View style={[styles.quickActionIconContainer, { backgroundColor: "#8E8E93" }]}>
+                <View style={[styles.quickActionIconContainer, styles.quickActionIconGray]}>
                   <ThemedText style={styles.quickActionIcon}>📋</ThemedText>
                 </View>
                 <ThemedText type="defaultSemiBold" style={styles.quickActionText}>
@@ -617,6 +629,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     opacity: 0.6,
     textAlign: "center",
+  },
+  quickActionIconOrange: {
+    backgroundColor: "#FF9500",
+  },
+  quickActionIconBlue: {
+    backgroundColor: "#0066CC",
+  },
+  quickActionIconGreen: {
+    backgroundColor: "#34C759",
+  },
+  quickActionIconGray: {
+    backgroundColor: "#8E8E93",
   },
   alertsSection: {
     marginBottom: 24,
