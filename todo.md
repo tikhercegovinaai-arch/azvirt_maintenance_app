@@ -574,3 +574,13 @@
 - [x] Improve responsive layout for different screen sizes
 - [x] Add visual indicators and icons
 - [x] Enhance color usage and contrast
+
+
+## Dashboard Interactivity
+
+### Tappable Sections
+- [x] Make equipment cards tappable to open Equipment Detail Modal
+- [x] Make alerts tappable to navigate to relevant screens
+- [ ] Add Services section with tappable service items
+- [ ] Add Low Stock section with tappable inventory items
+- [x] Add visual feedback on card press

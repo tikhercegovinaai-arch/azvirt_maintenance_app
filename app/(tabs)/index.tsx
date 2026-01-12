@@ -16,6 +16,7 @@ import { RecordServiceModal } from "@/components/modals/record-service-modal";
 import { AddFuelModal } from "@/components/modals/add-fuel-modal";
 import { AddHistoricalServiceModal } from "@/components/modals/add-historical-service-modal";
 import { FuelStockModal } from "@/components/modals/fuel-stock-modal";
+import { EquipmentDetailModal } from "@/components/modals/equipment-detail-modal";
 import { useAppData } from "@/hooks/use-app-data";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useThemeColor } from "@/hooks/use-theme-color";
@@ -31,6 +32,9 @@ export default function DashboardScreen() {
   const [showAddFuel, setShowAddFuel] = useState(false);
   const [showHistoricalService, setShowHistoricalService] = useState(false);
   const [showFuelStock, setShowFuelStock] = useState(false);
+  const [selectedEquipment, setSelectedEquipment] = useState<any>(null);
+  const [showEquipmentDetail, setShowEquipmentDetail] = useState(false);
+  const [selectedAlert, setSelectedAlert] = useState<any>(null);
 
   const successColor = "#34C759";
   const warningColor = "#FF9500";
@@ -85,6 +89,16 @@ export default function DashboardScreen() {
       })),
   ];
 
+  const handleAlertPress = (alert: any) => {
+    if (alert.id.startsWith('eq-')) {
+      const equipment = appState.equipment.find((e) => e.id === alert.id.replace('eq-', ''));
+      if (equipment) {
+        setSelectedEquipment(equipment);
+        setShowEquipmentDetail(true);
+      }
+    }
+  };
+
   // Calculate summary stats
   const totalEquipment = appState.equipment.length;
   const activeAlerts = alerts.length;
@@ -92,13 +106,15 @@ export default function DashboardScreen() {
   const lowStockParts = appState.spareParts.filter((p) => p.status !== "adequate").length;
 
   const renderAlertItem = ({ item }: { item: any }) => (
-    <View
-      style={[
+    <Pressable
+      onPress={() => handleAlertPress(item)}
+      style={({ pressed }) => [
         styles.alertItem,
         {
           backgroundColor: isDark
             ? "rgba(30, 30, 30, 0.95)"
             : "rgba(255, 255, 255, 0.95)",
+          opacity: pressed ? 0.7 : 1,
         },
       ]}
     >
@@ -111,8 +127,13 @@ export default function DashboardScreen() {
           {item.description}
         </ThemedText>
       </View>
-    </View>
+    </Pressable>
   );
+
+  const handleEquipmentPress = (equipment: any) => {
+    setSelectedEquipment(equipment);
+    setShowEquipmentDetail(true);
+  };
 
   const renderEquipmentCard = ({ item }: { item: any }) => {
     const status = getEquipmentStatus(item);
@@ -124,13 +145,15 @@ export default function DashboardScreen() {
     const fuelPercentage = hasFuelTracking ? (item.fuelLevel / item.fuelCapacity) * 100 : 0;
 
     return (
-      <View
-        style={[
+      <Pressable
+        onPress={() => handleEquipmentPress(item)}
+        style={({ pressed }) => [
           styles.equipmentCard,
           {
             backgroundColor: isDark
               ? "rgba(30, 30, 30, 0.95)"
               : "rgba(255, 255, 255, 0.95)",
+            opacity: pressed ? 0.7 : 1,
           },
         ]}
       >
@@ -194,7 +217,7 @@ export default function DashboardScreen() {
             />
           </View>
         )}
-      </View>
+      </Pressable>
     );
   };
 
@@ -486,6 +509,16 @@ export default function DashboardScreen() {
         fuelStock={appState.fuelStock}
         onAddFuel={addFuelToStock}
         onRemoveFuel={removeFuelFromStock}
+      />
+      <EquipmentDetailModal
+        visible={showEquipmentDetail}
+        equipment={selectedEquipment}
+        serviceRecords={appState.serviceRecords}
+        fuelLogs={appState.fuelLogs}
+        onClose={() => {
+          setShowEquipmentDetail(false);
+          setSelectedEquipment(null);
+        }}
       />
     </>
   );
