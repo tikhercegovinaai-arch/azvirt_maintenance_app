@@ -610,3 +610,13 @@
 - [x] Show current fuel level and capacity
 - [x] Add visual indicator for low fuel
 - [x] Make fuel widget tappable to open Fuel Stock modal
+
+
+## Fuel Date/Time Input
+
+### Add Fuel Modal Enhancement
+- [x] Add date picker to Add Fuel modal
+- [x] Add time picker to Add Fuel modal
+- [x] Store fuel receipt date and time
+- [x] Display selected date/time in modal
+- [x] Update FuelLog type to include date and time

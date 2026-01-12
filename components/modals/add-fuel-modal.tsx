@@ -29,6 +29,10 @@ export function AddFuelModal({ isOpen, equipmentId, onClose }: AddFuelModalProps
   const [costPerLiter, setCostPerLiter] = useState("");
   const [hoursAtFueling, setHoursAtFueling] = useState("");
   const [notes, setNotes] = useState("");
+  const today = new Date().toISOString().split("T")[0];
+  const now = new Date().toTimeString().slice(0, 5);
+  const [fuelDate, setFuelDate] = useState(today);
+  const [fuelTime, setFuelTime] = useState(now);
   const [loading, setLoading] = useState(false);
   const backgroundColor = useThemeColor({}, "background");
   const textColor = useThemeColor({}, "text");
@@ -87,7 +91,8 @@ export function AddFuelModal({ isOpen, equipmentId, onClose }: AddFuelModalProps
       const newFuelLog: any = {
         id: `fuel-${Date.now()}`,
         equipmentId: selectedEquipmentId,
-        date: new Date().toISOString().split("T")[0],
+        date: fuelDate,
+        time: fuelTime,
         litersAdded: litersToAdd,
         costPerLiter: parseFloat(costPerLiter),
         totalCost: parseFloat(totalCost),
@@ -119,6 +124,8 @@ export function AddFuelModal({ isOpen, equipmentId, onClose }: AddFuelModalProps
             setCostPerLiter("");
             setHoursAtFueling("");
             setNotes("");
+            setFuelDate(today);
+            setFuelTime(now);
             setSelectedEquipmentId(equipmentId || "");
             onClose();
           },
@@ -228,6 +235,36 @@ export function AddFuelModal({ isOpen, equipmentId, onClose }: AddFuelModalProps
                     </ThemedText>
                   </Pressable>
                 ))}
+              </View>
+            </View>
+
+            {/* Date and Time Inputs */}
+            <View style={styles.dateTimeRow}>
+              <View style={[styles.field, { flex: 1 }]}>
+                <ThemedText type="defaultSemiBold" style={styles.label}>
+                  Datum
+                </ThemedText>
+                <TextInput
+                  style={[styles.input, { color: textColor }]}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor="#999"
+                  value={fuelDate}
+                  onChangeText={setFuelDate}
+                  editable={!loading}
+                />
+              </View>
+              <View style={[styles.field, { flex: 1, marginLeft: 8 }]}>
+                <ThemedText type="defaultSemiBold" style={styles.label}>
+                  Vrijeme
+                </ThemedText>
+                <TextInput
+                  style={[styles.input, { color: textColor }]}
+                  placeholder="HH:mm"
+                  placeholderTextColor="#999"
+                  value={fuelTime}
+                  onChangeText={setFuelTime}
+                  editable={!loading}
+                />
               </View>
             </View>
 
@@ -439,6 +476,10 @@ const styles = StyleSheet.create({
   fuelBar: {
     height: "100%",
     borderRadius: 4,
+  },
+  dateTimeRow: {
+    flexDirection: "row",
+    gap: 8,
   },
   totalBox: {
     paddingVertical: 12,

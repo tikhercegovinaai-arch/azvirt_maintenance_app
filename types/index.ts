@@ -36,6 +36,7 @@ export interface FuelLog {
   id: string;
   equipmentId: string;
   date: string; // ISO date
+  time?: string; // HH:mm format
   litersAdded: number;
   costPerLiter: number;
   totalCost: number;
